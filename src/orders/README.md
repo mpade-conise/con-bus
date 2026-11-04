@@ -1,6 +1,6 @@
 # Order management integration
 
-Run `orders.sql` in the Supabase SQL Editor **after**:
+Run these migrations in the Supabase SQL Editor in this order:
 1. `src/authentication/authentication.sql`
 2. `src/homepage/homepage.sql`
 3. `src/sellers/sellers.sql`
