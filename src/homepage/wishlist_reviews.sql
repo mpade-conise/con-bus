@@ -41,7 +41,7 @@ drop policy if exists "Customers can submit their own product reviews" on public
 create policy "Customers can submit their own product reviews" on public.reviews for insert to authenticated
 with check(customer_id=auth.uid() and exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='customer' and p.is_active)
 and exists(select 1 from public.seller_orders o where o.customer_id=auth.uid() and o.status='delivered'
-and exists(select 1 from jsonb_array_elements(o.items) item where coalesce(item->>'product_id',item->>'id')=reviews.product_id::text)));
+and exists(select 1 from jsonb_array_elements(o.items) as item(value) where coalesce(item.value->>'product_id',item.value->>'id')=reviews.product_id::text)));
 drop policy if exists "Customers can update their pending reviews" on public.reviews;
 drop policy if exists "Customers manage own product reviews" on public.reviews;
 create policy "Customers manage own product reviews" on public.reviews for update to authenticated
