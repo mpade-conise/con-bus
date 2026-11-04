@@ -88,6 +88,8 @@ alter table public.message_reports enable row level security;
 
 drop policy if exists "Conversation participants read conversations" on public.conversations;
 create policy "Conversation participants read conversations" on public.conversations for select to authenticated using(customer_id=auth.uid() or seller_id=auth.uid());
+drop policy if exists "Messaging participants read counterpart profiles" on public.profiles;
+create policy "Messaging participants read counterpart profiles" on public.profiles for select to authenticated using(exists(select 1 from public.conversations c where (c.customer_id=auth.uid() and c.seller_id=profiles.id) or (c.seller_id=auth.uid() and c.customer_id=profiles.id)));
 drop policy if exists "Conversation participants hide own conversations" on public.conversations;
 create policy "Conversation participants hide own conversations" on public.conversations for update to authenticated using(customer_id=auth.uid() or seller_id=auth.uid()) with check(customer_id=auth.uid() or seller_id=auth.uid());
 
@@ -105,8 +107,22 @@ create policy "Users report messages they receive" on public.message_reports for
 drop policy if exists "Administrators review message reports" on public.message_reports;
 create policy "Administrators review message reports" on public.message_reports for select to authenticated using(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active));
 
-grant select,update on public.conversations to authenticated;
-grant select,insert,update on public.messages to authenticated;
+create or replace function public.guard_conversation_participant_update() returns trigger language plpgsql set search_path=public as $
+begin
+ if auth.uid()=old.customer_id then
+  if new.customer_id is distinct from old.customer_id or new.seller_id is distinct from old.seller_id or new.product_id is distinct from old.product_id or new.seller_deleted_at is distinct from old.seller_deleted_at then raise exception 'You may only delete your own conversation view.'; end if;
+ elsif auth.uid()=old.seller_id then
+  if new.customer_id is distinct from old.customer_id or new.seller_id is distinct from old.seller_id or new.product_id is distinct from old.product_id or new.customer_deleted_at is distinct from old.customer_deleted_at then raise exception 'You may only delete your own conversation view.'; end if;
+ else raise exception 'Not a conversation participant.'; end if;
+ return new;
+end; $;
+drop trigger if exists guard_conversation_update on public.conversations;
+create trigger guard_conversation_update before update on public.conversations for each row execute function public.guard_conversation_participant_update();
+
+revoke update on public.conversations from authenticated;
+grant select,update(customer_deleted_at,seller_deleted_at) on public.conversations to authenticated;
+grant select,insert on public.messages to authenticated;
+grant update(read_at) on public.messages to authenticated;
 grant select,insert,delete on public.user_blocks to authenticated;
 grant select,insert on public.message_reports to authenticated;
 
