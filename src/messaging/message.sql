@@ -107,7 +107,9 @@ drop policy if exists "Recipients mark messages read" on public.messages;
 create policy "Recipients mark messages read" on public.messages for update to authenticated using(sender_id<>auth.uid() and exists(select 1 from public.conversations c where c.id=conversation_id and (c.customer_id=auth.uid() or c.seller_id=auth.uid()))) with check(sender_id<>auth.uid() and exists(select 1 from public.conversations c where c.id=conversation_id and (c.customer_id=auth.uid() or c.seller_id=auth.uid())));
 
 drop policy if exists "Users manage blocks they create" on public.user_blocks;
-create policy "Users manage blocks they create" on public.user_blocks for all to authenticated using(blocker_id=auth.uid()) with check(blocker_id=auth.uid());
+create policy "Users create their own blocks" on public.user_blocks for insert to authenticated with check(blocker_id=auth.uid());
+drop policy if exists "Users delete their own blocks" on public.user_blocks;
+create policy "Users delete their own blocks" on public.user_blocks for delete to authenticated using(blocker_id=auth.uid());
 drop policy if exists "Users can see blocks involving themselves" on public.user_blocks;
 create policy "Users can see blocks involving themselves" on public.user_blocks for select to authenticated using(blocker_id=auth.uid() or blocked_id=auth.uid());
 drop policy if exists "Users report messages they receive" on public.message_reports;
@@ -129,10 +131,14 @@ create trigger guard_conversation_update before update on public.conversations f
 
 revoke update on public.conversations from authenticated;
 grant select,update(customer_deleted_at,seller_deleted_at) on public.conversations to authenticated;
+revoke update on public.messages from authenticated;
 grant select,insert on public.messages to authenticated;
 grant update(read_at) on public.messages to authenticated;
 grant select,insert,delete on public.user_blocks to authenticated;
+drop policy if exists "Administrators update message reports" on public.message_reports;
+create policy "Administrators update message reports" on public.message_reports for update to authenticated using(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active)) with check(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active));
 grant select,insert on public.message_reports to authenticated;
+grant update(status) on public.message_reports to authenticated;
 
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
 values('message-attachments','message-attachments',false,10485760,array['image/jpeg','image/png','image/webp','application/pdf','text/plain'])
