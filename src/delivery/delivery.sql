@@ -11,7 +11,7 @@ create table if not exists public.seller_delivery_settings(seller_id uuid primar
 alter table public.seller_delivery_settings enable row level security;
 drop policy if exists "Sellers manage own delivery settings" on public.seller_delivery_settings;
 create policy "Sellers manage own delivery settings" on public.seller_delivery_settings for all to authenticated using(seller_id=auth.uid() and exists(select 1 from public.profiles where id=auth.uid() and role='seller' and is_active)) with check(seller_id=auth.uid() and exists(select 1 from public.profiles where id=auth.uid() and role='seller' and is_active));
-grant select,insert,update,delete on public.seller_delivery_settings to authenticated;
+drop policy if exists "Customers view seller delivery settings" on public.seller_delivery_settings;\ncreate policy "Customers view seller delivery settings" on public.seller_delivery_settings for select to authenticated using(true);\ngrant select,insert,update,delete on public.seller_delivery_settings to authenticated;
 
 create table if not exists public.seller_delivery_zones(id uuid primary key default gen_random_uuid(),seller_id uuid not null references public.profiles(id) on delete cascade,zone_name text not null,city text not null,district text,delivery_fee numeric(12,2) not null default 0 check(delivery_fee>=0),min_days integer not null default 1 check(min_days between 0 and 90),max_days integer not null default 3 check(max_days between min_days and 90),is_active boolean not null default true,created_at timestamptz not null default now(),updated_at timestamptz not null default now(),unique(seller_id,zone_name));
 create index if not exists seller_delivery_zones_lookup_idx on public.seller_delivery_zones(seller_id,city,district) where is_active;
@@ -70,7 +70,7 @@ begin
  return v_final;
 end;$$;
 revoke all on function public.place_marketplace_order_with_delivery(jsonb,jsonb,text,text,text,jsonb) from public,anon;
-grant execute on function public.place_marketplace_order_with_delivery(jsonb,jsonb,text,text,text,jsonb) to authenticated;
+grant execute on function public.place_marketplace_order_with_delivery(jsonb,jsonb,text,text,text,jsonb) to authenticated;\nrevoke execute on function public.place_marketplace_order(jsonb,jsonb,text,text,text) from authenticated;
 
 create or replace function public.update_seller_delivery(p_order_id uuid,p_delivery_status text,p_tracking_number text default null,p_personnel_id uuid default null,p_estimated_delivery_at timestamptz default null,p_note text default null)
 returns void language plpgsql security definer set search_path=public as $$
