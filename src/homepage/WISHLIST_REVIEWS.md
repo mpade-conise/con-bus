@@ -21,4 +21,4 @@ This migration:
 - Product page: open a product to add/remove it from the wishlist and view approved reviews.
 - Seller: open Seller Dashboard → Product reviews to respond to customer reviews.
 
-A customer can submit a review after the order status is `delivered`. Reviews appear publicly after administrator approval. Review reports are stored for administrator review; a dedicated report-moderation screen is not included in this update.
+A customer can submit a review after the order status is `delivered`. Reviews appear publicly after administrator approval. Administrators can approve/reject reviews and process reports at `/admin/reviews`.
