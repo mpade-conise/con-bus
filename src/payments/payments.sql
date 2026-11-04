@@ -21,6 +21,7 @@ create table if not exists public.marketplace_transactions(
   provider text not null default 'paychangu',
   payment_method text not null check(payment_method in('airtel_money','tnm_mpamba','card')),
   amount numeric(12,2) not null check(amount>0),
+  provider_fee numeric(12,2) not null default 0 check(provider_fee>=0),
   currency text not null default 'MWK' check(currency='MWK'),
   status text not null default 'pending' check(status in('pending','successful','failed','expired','refund_pending','refunded')),
   checkout_url text,
@@ -193,7 +194,7 @@ $$;
 revoke all on function public.create_marketplace_payment_intent(uuid[],text) from public;
 grant execute on function public.create_marketplace_payment_intent(uuid[],text) to authenticated;
 
-create or replace function public.finalize_marketplace_payment(p_tx_ref text,p_provider_reference text,p_amount numeric,p_currency text,p_provider_status text)
+create or replace function public.finalize_marketplace_payment(p_tx_ref text,p_provider_reference text,p_amount numeric,p_currency text,p_provider_status text,p_provider_fee numeric default 0)
 returns void language plpgsql security definer set search_path=public as $$
 declare v_tx public.marketplace_transactions%rowtype;
 begin
@@ -203,7 +204,8 @@ begin
   if v_tx.status='successful' then return; end if;
   if v_tx.status<>'pending' then raise exception 'Transaction is not pending.'; end if;
   if p_provider_status<>'success' or p_currency<>'MWK' or p_amount<>v_tx.amount then raise exception 'Provider payment details do not match the expected transaction.'; end if;
-  update public.marketplace_transactions set status='successful',provider_reference=p_provider_reference,provider_status=p_provider_status,completed_at=now(),updated_at=now() where id=v_tx.id;
+  if coalesce(p_provider_fee,0)<0 then raise exception 'Invalid provider fee.'; end if;
+  update public.marketplace_transactions set status='successful',provider_reference=p_provider_reference,provider_status=p_provider_status,provider_fee=coalesce(p_provider_fee,0),completed_at=now(),updated_at=now() where id=v_tx.id;
   update public.seller_orders o set payment_status='paid' from public.payment_order_allocations a where a.transaction_id=v_tx.id and a.order_id=o.id;
   insert into public.seller_earnings(seller_id,order_id,transaction_id,gross_amount,platform_fee,net_amount)
   select seller_id,order_id,v_tx.id,gross_amount,platform_fee,seller_net from public.payment_order_allocations where transaction_id=v_tx.id
@@ -212,8 +214,8 @@ begin
   values(v_tx.id,v_tx.tx_ref,p_provider_reference,v_tx.amount,p_amount,p_currency,'matched','PayChangu verification succeeded.');
 end;
 $$;
-revoke all on function public.finalize_marketplace_payment(text,text,numeric,text,text) from public;
-grant execute on function public.finalize_marketplace_payment(text,text,numeric,text,text) to service_role;
+revoke all on function public.finalize_marketplace_payment(text,text,numeric,text,text,numeric) from public;
+grant execute on function public.finalize_marketplace_payment(text,text,numeric,text,text,numeric) to service_role;
 
 create or replace function public.fail_marketplace_payment(p_tx_ref text,p_reason text)
 returns void language plpgsql security definer set search_path=public as $$
