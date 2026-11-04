@@ -122,17 +122,17 @@ alter table public.products enable row level security;
 alter table public.reviews enable row level security;
 alter table public.promotional_banners enable row level security;
 
--- Categories: public visitors can browse active categories; administrators manage them.
+-- Categories: authenticated users can browse active categories; administrators manage them.
 drop policy if exists "Public can read active categories" on public.product_categories;
-create policy "Public can read active categories" on public.product_categories for select to anon, authenticated using (is_active = true);
+create policy "Public can read active categories" on public.product_categories for select to authenticated using (is_active = true);
 drop policy if exists "Administrators manage categories" on public.product_categories;
 create policy "Administrators manage categories" on public.product_categories for all to authenticated
 using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'administrator' and p.is_active))
 with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'administrator' and p.is_active));
 
--- Store profiles deliberately contain private phone numbers; only this public-safe store table is exposed.
+-- Store profiles deliberately contain private phone numbers; only authenticated users can read this store table.
 drop policy if exists "Public can read public seller stores" on public.seller_stores;
-create policy "Public can read public seller stores" on public.seller_stores for select to anon, authenticated using (is_public = true);
+create policy "Public can read public seller stores" on public.seller_stores for select to authenticated using (is_public = true);
 drop policy if exists "Sellers can read own store" on public.seller_stores;
 create policy "Sellers can read own store" on public.seller_stores for select to authenticated using (seller_id = auth.uid());
 drop policy if exists "Sellers can create own store" on public.seller_stores;
@@ -143,9 +143,9 @@ create policy "Sellers can update own store" on public.seller_stores for update 
 using (seller_id = auth.uid() and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'seller' and p.is_active))
 with check (seller_id = auth.uid() and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'seller' and p.is_active));
 
--- Products: everyone sees only published active listings; sellers manage only their own products.
+-- Products: authenticated users see only published active listings; sellers manage only their own products.
 drop policy if exists "Public can view published storefront products" on public.products;
-create policy "Public can view published storefront products" on public.products for select to anon, authenticated using (is_active = true and status = 'published');
+create policy "Public can view published storefront products" on public.products for select to authenticated using (is_active = true and status = 'published');
 drop policy if exists "Sellers can view own products" on public.products;
 create policy "Sellers can view own products" on public.products for select to authenticated using (seller_id = auth.uid());
 drop policy if exists "Sellers can create own products" on public.products;
@@ -163,9 +163,9 @@ create policy "Administrators manage products" on public.products for all to aut
 using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'administrator' and p.is_active))
 with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'administrator' and p.is_active));
 
--- Reviews: only approved reviews are public; customers submit and edit their own pending reviews.
+-- Reviews: authenticated users see approved reviews; customers submit and edit their own pending reviews.
 drop policy if exists "Public can read approved product reviews" on public.reviews;
-create policy "Public can read approved product reviews" on public.reviews for select to anon, authenticated using (status = 'approved');
+create policy "Public can read approved product reviews" on public.reviews for select to authenticated using (status = 'approved');
 drop policy if exists "Customers can read own reviews" on public.reviews;
 create policy "Customers can read own reviews" on public.reviews for select to authenticated using (customer_id = auth.uid());
 drop policy if exists "Customers can submit their own product reviews" on public.reviews;
@@ -184,9 +184,9 @@ create policy "Administrators moderate reviews" on public.reviews for all to aut
 using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'administrator' and p.is_active))
 with check (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'administrator' and p.is_active));
 
--- Promotional banners are public only while active and within their schedule; administrators manage campaigns.
+-- Promotional banners are visible only to authenticated users while active and within schedule; administrators manage campaigns.
 drop policy if exists "Public can read current promotional banners" on public.promotional_banners;
-create policy "Public can read current promotional banners" on public.promotional_banners for select to anon, authenticated
+create policy "Public can read current promotional banners" on public.promotional_banners for select to authenticated
 using (is_active and (starts_at is null or starts_at <= now()) and (ends_at is null or ends_at > now()));
 drop policy if exists "Administrators manage promotional banners" on public.promotional_banners;
 create policy "Administrators manage promotional banners" on public.promotional_banners for all to authenticated
@@ -197,14 +197,17 @@ with check (exists (select 1 from public.profiles p where p.id = auth.uid() and 
 -- New sellers must create a seller_stores row and product rows from the seller dashboard.
 
 -- Explicit PostgREST privileges are required in addition to RLS policies.
-grant usage on schema public to anon, authenticated;
-grant select on public.product_categories to anon, authenticated;
+grant usage on schema public to authenticated;
+grant select on public.product_categories to authenticated;
 grant insert, update, delete on public.product_categories to authenticated;
-grant select on public.seller_stores to anon, authenticated;
+grant select on public.seller_stores to authenticated;
 grant insert, update, delete on public.seller_stores to authenticated;
-grant select on public.products to anon, authenticated;
+grant select on public.products to authenticated;
 grant insert, update, delete on public.products to authenticated;
-grant select on public.reviews to anon, authenticated;
+grant select on public.reviews to authenticated;
 grant insert, update, delete on public.reviews to authenticated;
-grant select on public.promotional_banners to anon, authenticated;
+grant select on public.promotional_banners to authenticated;
 grant insert, update, delete on public.promotional_banners to authenticated;
+
+-- Remove any earlier anonymous grants as well as anonymous RLS access.
+revoke all on public.product_categories, public.seller_stores, public.products, public.reviews, public.promotional_banners from anon;
