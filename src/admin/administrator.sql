@@ -67,3 +67,10 @@ grant select,insert,update,delete on public.product_reports,public.user_reports,
 grant select,update on public.profiles to authenticated;
 grant select,insert,update,delete on public.seller_stores to authenticated;
 grant select,update on public.message_reports to authenticated;
+
+drop policy if exists "Administrators read all profiles" on public.profiles;
+create policy "Administrators read all profiles" on public.profiles for select to authenticated using(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active));
+drop policy if exists "Administrators read marketplace orders" on public.seller_orders;
+create policy "Administrators read marketplace orders" on public.seller_orders for select to authenticated using(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active));
+drop policy if exists "Administrators read marketplace transactions" on public.marketplace_transactions;
+create policy "Administrators read marketplace transactions" on public.marketplace_transactions for select to authenticated using(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active));
