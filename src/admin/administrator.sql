@@ -82,3 +82,29 @@ drop policy if exists "Administrators read marketplace orders" on public.seller_
 create policy "Administrators read marketplace orders" on public.seller_orders for select to authenticated using(public.is_active_marketplace_admin());
 drop policy if exists "Administrators read marketplace transactions" on public.marketplace_transactions;
 create policy "Administrators read marketplace transactions" on public.marketplace_transactions for select to authenticated using(public.is_active_marketplace_admin());
+
+-- Payment administration must require an active administrator, not merely a stored role.
+-- These policies override the earlier role-only policies created by payments.sql.
+drop policy if exists "Administrators manage marketplace settings" on public.marketplace_settings;
+create policy "Administrators manage marketplace settings" on public.marketplace_settings for all to authenticated
+using(public.is_active_marketplace_admin()) with check(public.is_active_marketplace_admin());
+
+drop policy if exists "Administrators read all transactions" on public.marketplace_transactions;
+create policy "Administrators read all transactions" on public.marketplace_transactions for select to authenticated
+using(public.is_active_marketplace_admin());
+
+drop policy if exists "Administrators manage earnings" on public.seller_earnings;
+create policy "Administrators manage earnings" on public.seller_earnings for all to authenticated
+using(public.is_active_marketplace_admin()) with check(public.is_active_marketplace_admin());
+
+drop policy if exists "Administrators manage withdrawals" on public.seller_withdrawals;
+create policy "Administrators manage withdrawals" on public.seller_withdrawals for all to authenticated
+using(public.is_active_marketplace_admin()) with check(public.is_active_marketplace_admin());
+
+drop policy if exists "Administrators manage refund requests" on public.marketplace_refund_requests;
+create policy "Administrators manage refund requests" on public.marketplace_refund_requests for all to authenticated
+using(public.is_active_marketplace_admin()) with check(public.is_active_marketplace_admin());
+
+drop policy if exists "Administrators read reconciliation" on public.payment_reconciliation;
+create policy "Administrators read reconciliation" on public.payment_reconciliation for select to authenticated
+using(public.is_active_marketplace_admin());
