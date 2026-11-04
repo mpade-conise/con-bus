@@ -88,9 +88,12 @@ begin
   if v_order.status='ready_for_delivery' then update public.seller_orders set status='shipped' where id=p_order_id;end if;
   if (select status from public.seller_orders where id=p_order_id)='shipped' then update public.seller_orders set status='delivered' where id=p_order_id;end if;
  end if;
- if p_delivery_status='in_transit' and v_order.status not in('ready_for_delivery','shipped') then raise exception 'The order must be ready for dispatch before it can be sent.';end if;
- if p_delivery_status='in_transit' and v_order.status='ready_for_delivery' then update public.seller_orders set status='shipped' where id=p_order_id;end if;
- if p_delivery_status='ready_for_pickup' and (v_order.delivery_method<>'pickup' or v_order.status not in('processing','ready_for_delivery')) then raise exception 'This pickup order is not ready for collection.';end if;
+ if p_delivery_status in('picked_up','in_transit') and v_order.status not in('ready_for_delivery','shipped') then raise exception 'The order must be ready for dispatch before it can be sent.';end if;
+ if p_delivery_status in('picked_up','in_transit') and v_order.status='ready_for_delivery' then update public.seller_orders set status='shipped' where id=p_order_id;end if;
+ if p_delivery_status='ready_for_pickup' then
+  if v_order.delivery_method<>'pickup' or v_order.status not in('processing','ready_for_delivery') then raise exception 'This pickup order is not ready for collection.';end if;
+  if v_order.status='processing' then update public.seller_orders set status='ready_for_delivery' where id=p_order_id;end if;
+ end if;
  v_old:=v_order.delivery_status;
  update public.seller_orders set delivery_status=p_delivery_status,tracking_number=coalesce(nullif(trim(p_tracking_number),''),tracking_number),delivery_person_id=coalesce(p_personnel_id,delivery_person_id),estimated_delivery_at=coalesce(p_estimated_delivery_at,estimated_delivery_at),delivered_at=case when p_delivery_status in('delivered','collected') then now() else delivered_at end where id=p_order_id;
  if p_personnel_id is not null then insert into public.seller_delivery_assignments(order_id,seller_id,personnel_id,assigned_by,notes) values(p_order_id,auth.uid(),p_personnel_id,auth.uid(),nullif(p_note,''));end if;
