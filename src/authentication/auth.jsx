@@ -1,5 +1,4 @@
-import{Navigate,Route}from"react-router-dom";
-import{useAuth}from"./AuthContext.jsx";
+import{Route}from"react-router-dom";
 import Login from"./Login.jsx";
 import CustomerRegistration from"./CustomerRegistration.jsx";
 import SellerRegistration from"./SellerRegistration.jsx";
@@ -17,12 +16,11 @@ import DeactivatedAccount from"./DeactivatedAccount.jsx";
 import Dashboard from"./Dashboard.jsx";
 import SecurityCenter from"./SecurityCenter.jsx";
 
-function GuestOnly({children}){const{user,role,loading,configured}=useAuth();if(!configured)return children;if(loading)return <div className="auth-loading">Checking your account…</div>;if(user&&!role)return <div className="auth-loading">Your account could not be verified. Please contact support.</div>;if(user)return <Navigate to={role==="administrator"?"/admin":role==="seller"?"/seller":"/"} replace/>;return children;}
 
 export const authRoutes=[
- <Route key="login" path="/auth/login" element={<GuestOnly><Login/></GuestOnly>}/>,
- <Route key="register-customer" path="/auth/register/customer" element={<GuestOnly><CustomerRegistration/></GuestOnly>}/>,
- <Route key="register-seller" path="/auth/register/seller" element={<GuestOnly><SellerRegistration/></GuestOnly>}/>,
+ <Route key="login" path="/auth/login" element={<Login/>}/>,
+ <Route key="register-customer" path="/auth/register/customer" element={<CustomerRegistration/>}/>,
+ <Route key="register-seller" path="/auth/register/seller" element={<SellerRegistration/>}/>,
  <Route key="verify-email" path="/auth/verify-email" element={<EmailVerification/>}/>,
  <Route key="verify-phone" path="/auth/verify-phone" element={<ProtectedRoute><PhoneVerification/></ProtectedRoute>}/>,
  <Route key="forgot-password" path="/auth/forgot-password" element={<ForgotPassword/>}/>,
