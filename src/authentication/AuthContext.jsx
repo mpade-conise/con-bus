@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { requireSupabase, supabase, isSupabaseConfigured } from "./supabase.js";
 
 const AuthContext = createContext(null);
@@ -7,24 +7,58 @@ export function AuthProvider({ children }) {
   const [session,setSession]=useState(null);
   const [profile,setProfile]=useState(null);
   const [loading,setLoading]=useState(true);
+  const requestId=useRef(0);
 
   async function loadProfile(user) {
-    if (!user || !isSupabaseConfigured) { setProfile(null); return; }
-    const {data}=await supabase.from("profiles").select("*").eq("id",user.id).maybeSingle();
-    setProfile(data || {id:user.id,email:user.email,role:"customer"});
+    if (!user || !isSupabaseConfigured) return null;
+    const {data,error}=await supabase.from("profiles").select("id,role,is_active").eq("id",user.id).maybeSingle();
+    if (error) throw error;
+    return data;
   }
 
   useEffect(()=>{
     if (!isSupabaseConfigured) { setLoading(false); return; }
     let alive=true;
-    supabase.auth.getSession().then(async({data})=>{if(!alive)return;setSession(data.session);await loadProfile(data.session?.user);if(alive)setLoading(false);});
-    const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,next)=>{setSession(next);if(!next)setProfile(null);else queueMicrotask(()=>loadProfile(next.user));});
-    return()=>{alive=false;subscription.unsubscribe();};
+    const syncSession=async(next)=>{
+      const current=++requestId.current;
+      setSession(next);
+      setProfile(null);
+      setLoading(true);
+      if (!next?.user) { setLoading(false); return; }
+      try {
+        const data=await loadProfile(next.user);
+        if (alive && current===requestId.current) setProfile(data);
+      } catch {
+        if (alive && current===requestId.current) setProfile(null);
+      } finally {
+        if (alive && current===requestId.current) setLoading(false);
+      }
+    };
+    supabase.auth.getSession().then(({data,error})=>{
+      if (error) { if(alive){setSession(null);setProfile(null);setLoading(false);} return; }
+      if (alive) syncSession(data.session);
+    });
+    const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,next)=>{if(alive) queueMicrotask(()=>syncSession(next));});
+    return()=>{alive=false;requestId.current++;subscription.unsubscribe();};
   },[]);
 
-  async function signOut(){const client=requireSupabase();const {error}=await client.auth.signOut();if(error)throw error;setSession(null);setProfile(null);}
-  async function refreshProfile(){await loadProfile(session?.user);}
-  return <AuthContext.Provider value={{session,user:session?.user || null,profile,role:profile?.role || null,loading,configured:isSupabaseConfigured,signOut,refreshProfile}}>{children}</AuthContext.Provider>;
+  async function signOut(){
+    const client=requireSupabase();
+    const {error}=await client.auth.signOut();
+    if(error)throw error;
+    setSession(null);
+    setProfile(null);
+  }
+  async function refreshProfile(){
+    const data=await loadProfile(session?.user);
+    setProfile(data);
+    return data;
+  }
+  return <AuthContext.Provider value={{session,user:session?.user||null,profile,role:profile?.role||null,loading,configured:isSupabaseConfigured,signOut,refreshProfile}}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth(){const value=useContext(AuthContext);if(!value)throw new Error("useAuth must be used inside AuthProvider");return value;}
+export function useAuth(){
+  const value=useContext(AuthContext);
+  if(!value)throw new Error("useAuth must be used inside AuthProvider");
+  return value;
+}
