@@ -49,7 +49,7 @@ button{cursor:pointer}
 .empty-state strong{font-size:14px;color:#344256}.empty-state p{font-size:11px;color:#929baa;margin:0}
 .seller-banner{margin:15px 0 55px;padding:35px 40px;background:#f0f8f4;border-radius:17px;display:flex;align-items:center;justify-content:space-between;gap:20px}
 .seller-banner h2{font-size:26px}.seller-banner p{font-size:12px;color:#7c8990;margin-bottom:0}
-.seller-banner button{white-space:nowrap}
+.seller-banner button,.seller-banner .seller-cta{white-space:nowrap;height:44px;padding:0 18px;border:0;border-radius:8px;background:#159568;color:#fff;display:inline-flex;align-items:center;gap:9px;font-size:12px;font-weight:700}
 footer{height:75px;border-top:1px solid #edf0f4;display:flex;align-items:center;justify-content:space-between}
 footer .brand{font-size:17px}footer .brand-mark{width:29px;height:29px}footer>span{font-size:11px;color:#929baa}
 @media(max-width:800px){.app-shell{padding:0 5%}.nav-links{display:none}.hero{grid-template-columns:1fr;padding:55px 0;gap:28px}.hero-art{height:290px}.category-grid{grid-template-columns:repeat(2,1fr)}}
