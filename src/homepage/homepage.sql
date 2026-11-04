@@ -205,7 +205,8 @@ grant select on public.product_categories to authenticated;
 grant insert, update, delete on public.product_categories to authenticated;
 grant select on public.seller_stores to authenticated;
 grant insert, update, delete on public.seller_stores to authenticated;
-grant select on public.products to authenticated;
+grant select, delete on public.products to authenticated;
+-- Product inserts and updates are granted by column in sellers.sql; RLS still limits deletes to the owner.
 -- Product writes are granted by column in sellers.sql to prevent metric forgery.
 grant select on public.reviews to authenticated;
 grant insert, update, delete on public.reviews to authenticated;
