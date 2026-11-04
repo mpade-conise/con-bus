@@ -176,7 +176,8 @@ begin
   perform 1 from public.seller_orders where id=any(p_order_ids) and customer_id=v_uid for update;
   if (select count(*) from public.seller_orders where id=any(p_order_ids) and customer_id=v_uid and status not in('cancelled','refunded') and payment_status in('pending','failed'))<>array_length(p_order_ids,1) then raise exception 'One or more orders cannot be paid.'; end if;
   update public.marketplace_transactions t set status='expired',updated_at=now()
-  where t.status='pending' and exists(select 1 from public.payment_order_allocations a where a.transaction_id=t.id and a.order_id=any(p_order_ids));
+  where t.status='pending' and t.created_at<now()-interval '30 minutes' and exists(select 1 from public.payment_order_allocations a where a.transaction_id=t.id and a.order_id=any(p_order_ids));
+  if exists(select 1 from public.marketplace_transactions t join public.payment_order_allocations a on a.transaction_id=t.id where t.status='pending' and a.order_id=any(p_order_ids)) then raise exception 'A payment is already in progress for this order. Wait for its result before retrying.'; end if;
   select platform_fee_percent into v_fee_rate from public.marketplace_settings where id=true;
   select sum(total_amount) into v_amount from public.seller_orders where id=any(p_order_ids) and customer_id=v_uid;
   if coalesce(v_amount,0)<=0 or v_amount<>trunc(v_amount) or v_amount>2147483647 then raise exception 'Payment amount must be a whole MWK amount within the provider limit.'; end if;
@@ -203,10 +204,20 @@ begin
   select * into v_tx from public.marketplace_transactions where tx_ref=p_tx_ref for update;
   if not found then raise exception 'Unknown transaction reference.'; end if;
   if v_tx.status='successful' then return; end if;
-  if v_tx.status<>'pending' then raise exception 'Transaction is not pending.'; end if;
+  if v_tx.status not in('pending','expired') then raise exception 'Transaction is not eligible for payment finalization.'; end if;
+  if exists(select 1 from public.payment_order_allocations mine join public.payment_order_allocations other on other.order_id=mine.order_id join public.marketplace_transactions paid on paid.id=other.transaction_id where mine.transaction_id=v_tx.id and other.transaction_id<>v_tx.id and paid.status='successful') then
+    update public.marketplace_transactions set status='refund_pending',provider_reference=p_provider_reference,provider_status='duplicate_payment_requires_refund',provider_fee=coalesce(p_provider_fee,0),updated_at=now() where id=v_tx.id;
+    insert into public.payment_reconciliation(transaction_id,tx_ref,provider_reference,expected_amount,received_amount,currency,result,notes)
+    values(v_tx.id,v_tx.tx_ref,p_provider_reference,v_tx.amount,p_amount,p_currency,'duplicate_payment','Provider confirmed a second payment for orders already paid by another transaction. Refund this duplicate payment.');
+    insert into public.marketplace_notifications(user_id,notification_type,title,message,related_id)
+    values(v_tx.customer_id,'duplicate_payment','Duplicate payment under review','A second payment was detected for the same order. The extra payment is flagged for refund review.',v_tx.id);
+    return;
+  end if;
   if p_provider_status<>'success' or p_currency<>'MWK' or p_amount<>v_tx.amount then raise exception 'Provider payment details do not match the expected transaction.'; end if;
   if coalesce(p_provider_fee,0)<0 then raise exception 'Invalid provider fee.'; end if;
   update public.marketplace_transactions set status='successful',provider_reference=p_provider_reference,provider_status=p_provider_status,provider_fee=coalesce(p_provider_fee,0),completed_at=now(),updated_at=now() where id=v_tx.id;
+  update public.marketplace_transactions other set status='expired',updated_at=now()
+  where other.id<>v_tx.id and other.status='pending' and exists(select 1 from public.payment_order_allocations mine join public.payment_order_allocations theirs on theirs.order_id=mine.order_id where mine.transaction_id=v_tx.id and theirs.transaction_id=other.id);
   update public.seller_orders o set payment_status='paid' from public.payment_order_allocations a where a.transaction_id=v_tx.id and a.order_id=o.id;
   insert into public.seller_earnings(seller_id,order_id,transaction_id,gross_amount,platform_fee,net_amount)
   select seller_id,order_id,v_tx.id,gross_amount,platform_fee,seller_net from public.payment_order_allocations where transaction_id=v_tx.id
@@ -409,3 +420,18 @@ $$;
 drop trigger if exists marketplace_refund_apply_trigger on public.marketplace_refund_requests;
 create trigger marketplace_refund_apply_trigger after update of status on public.marketplace_refund_requests
 for each row execute function public.apply_marketplace_refund();
+
+create or replace function public.admin_confirm_duplicate_payment_refund(p_tx_ref text)
+returns void language plpgsql security definer set search_path=public as $$
+declare v_tx public.marketplace_transactions%rowtype;
+begin
+ if not exists(select 1 from public.profiles where id=auth.uid() and role='administrator' and is_active) then raise exception 'Administrator access required.'; end if;
+ select * into v_tx from public.marketplace_transactions where tx_ref=p_tx_ref for update;
+ if not found or v_tx.status<>'refund_pending' then raise exception 'This transaction is not awaiting duplicate-payment refund confirmation.'; end if;
+ update public.marketplace_transactions set status='refunded',refunded_amount=amount,provider_status='duplicate_refund_confirmed_by_admin',updated_at=now(),completed_at=now() where id=v_tx.id;
+ insert into public.payment_reconciliation(transaction_id,tx_ref,provider_reference,expected_amount,received_amount,currency,result,notes,reconciled_by)
+ values(v_tx.id,v_tx.tx_ref,v_tx.provider_reference,v_tx.amount,v_tx.amount,v_tx.currency,'duplicate_refund_confirmed','Duplicate payment refunded externally and confirmed by administrator.',auth.uid());
+end;
+$$;
+revoke all on function public.admin_confirm_duplicate_payment_refund(text) from public;
+grant execute on function public.admin_confirm_duplicate_payment_refund(text) to authenticated;
