@@ -102,7 +102,7 @@ revoke all on function public.marketplace_messaging_blocked(uuid,uuid) from publ
 grant execute on function public.marketplace_messaging_blocked(uuid,uuid) to authenticated;
 
 drop policy if exists "Participants send messages when not blocked" on public.messages;
-create policy "Participants send messages when not blocked" on public.messages for insert to authenticated with check(sender_id=auth.uid() and exists(select 1 from public.conversations c where c.id=conversation_id and (c.customer_id=auth.uid() or c.seller_id=auth.uid()) and not exists(select 1 from public.user_blocks b where (b.blocker_id=c.customer_id and b.blocked_id=c.seller_id) or (b.blocker_id=c.seller_id and b.blocked_id=c.customer_id))));
+create policy "Participants send messages when not blocked" on public.messages for insert to authenticated with check(sender_id=auth.uid() and exists(select 1 from public.conversations c where c.id=conversation_id and (c.customer_id=auth.uid() or c.seller_id=auth.uid()) and not public.marketplace_messaging_blocked(c.customer_id,c.seller_id)));
 drop policy if exists "Recipients mark messages read" on public.messages;
 create policy "Recipients mark messages read" on public.messages for update to authenticated using(sender_id<>auth.uid() and exists(select 1 from public.conversations c where c.id=conversation_id and (c.customer_id=auth.uid() or c.seller_id=auth.uid()))) with check(sender_id<>auth.uid() and exists(select 1 from public.conversations c where c.id=conversation_id and (c.customer_id=auth.uid() or c.seller_id=auth.uid())));
 
@@ -137,7 +137,7 @@ values('message-attachments','message-attachments',false,10485760,array['image/j
 on conflict(id) do update set public=false,file_size_limit=10485760,allowed_mime_types=excluded.allowed_mime_types;
 drop policy if exists "Conversation members upload message attachments" on storage.objects;
 create policy "Conversation members upload message attachments" on storage.objects for insert to authenticated
-with check(bucket_id='message-attachments' and (storage.foldername(name))[1] in(select c.id::text from public.conversations c where (c.customer_id=auth.uid() or c.seller_id=auth.uid()) and not exists(select 1 from public.user_blocks b where (b.blocker_id=c.customer_id and b.blocked_id=c.seller_id) or (b.blocker_id=c.seller_id and b.blocked_id=c.customer_id))));
+with check(bucket_id='message-attachments' and (storage.foldername(name))[1] in(select c.id::text from public.conversations c where (c.customer_id=auth.uid() or c.seller_id=auth.uid()) and not public.marketplace_messaging_blocked(c.customer_id,c.seller_id)));
 drop policy if exists "Conversation members read message attachments" on storage.objects;
 create policy "Conversation members read message attachments" on storage.objects for select to authenticated
 using(bucket_id='message-attachments' and (storage.foldername(name))[1] in(select c.id::text from public.conversations c where c.customer_id=auth.uid() or c.seller_id=auth.uid()));
