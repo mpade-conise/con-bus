@@ -178,7 +178,7 @@ begin
   where t.status='pending' and exists(select 1 from public.payment_order_allocations a where a.transaction_id=t.id and a.order_id=any(p_order_ids));
   select platform_fee_percent into v_fee_rate from public.marketplace_settings where id=true;
   select sum(total_amount) into v_amount from public.seller_orders where id=any(p_order_ids) and customer_id=v_uid;
-  if coalesce(v_amount,0)<=0 then raise exception 'Invalid payment amount.'; end if;
+  if coalesce(v_amount,0)<=0 or v_amount<>trunc(v_amount) or v_amount>2147483647 then raise exception 'Payment amount must be a whole MWK amount within the provider limit.'; end if;
   insert into public.marketplace_transactions(tx_ref,customer_id,payment_method,amount,currency,status)
   values(v_tx_ref,v_uid,p_method,v_amount,'MWK','pending') returning id into v_tx_id;
   for v_order in select * from public.seller_orders where id=any(p_order_ids) and customer_id=v_uid loop
