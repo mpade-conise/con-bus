@@ -45,23 +45,23 @@ alter table public.message_reports enable row level security;
 drop policy if exists "Users submit product reports" on public.product_reports;
 create policy "Users submit product reports" on public.product_reports for insert to authenticated with check(reporter_id=auth.uid());
 drop policy if exists "Administrators manage product reports" on public.product_reports;
-create policy "Administrators manage product reports" on public.product_reports for all to authenticated using(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active)) with check(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active));
+create policy "Administrators manage product reports" on public.product_reports for all to authenticated using(public.is_active_marketplace_admin()) with check(public.is_active_marketplace_admin());
 drop policy if exists "Users submit user reports" on public.user_reports;
 create policy "Users submit user reports" on public.user_reports for insert to authenticated with check(reporter_id=auth.uid() and reported_user_id<>auth.uid());
 drop policy if exists "Administrators manage user reports" on public.user_reports;
-create policy "Administrators manage user reports" on public.user_reports for all to authenticated using(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active)) with check(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active));
+create policy "Administrators manage user reports" on public.user_reports for all to authenticated using(public.is_active_marketplace_admin()) with check(public.is_active_marketplace_admin());
 
 drop policy if exists "Administrators manage marketplace ads" on public.marketplace_ads;
-create policy "Administrators manage marketplace ads" on public.marketplace_ads for all to authenticated using(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active)) with check(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active));
+create policy "Administrators manage marketplace ads" on public.marketplace_ads for all to authenticated using(public.is_active_marketplace_admin()) with check(public.is_active_marketplace_admin());
 drop policy if exists "Users read active marketplace ads" on public.marketplace_ads;
 create policy "Users read active marketplace ads" on public.marketplace_ads for select to authenticated using(is_active and (starts_at is null or starts_at<=now()) and (ends_at is null or ends_at>now()));
 
 drop policy if exists "Administrators manage profiles" on public.profiles;
-create policy "Administrators manage profiles" on public.profiles for update to authenticated using(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active)) with check(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active));
+create policy "Administrators manage profiles" on public.profiles for update to authenticated using(public.is_active_marketplace_admin()) with check(public.is_active_marketplace_admin());
 drop policy if exists "Administrators manage seller stores" on public.seller_stores;
-create policy "Administrators manage seller stores" on public.seller_stores for all to authenticated using(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active)) with check(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active));
+create policy "Administrators manage seller stores" on public.seller_stores for all to authenticated using(public.is_active_marketplace_admin()) with check(public.is_active_marketplace_admin());
 drop policy if exists "Administrators review message reports" on public.message_reports;
-create policy "Administrators review message reports" on public.message_reports for all to authenticated using(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active)) with check(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active));
+create policy "Administrators review message reports" on public.message_reports for all to authenticated using(public.is_active_marketplace_admin()) with check(public.is_active_marketplace_admin());
 
 grant select,insert,update,delete on public.product_reports,public.user_reports,public.marketplace_ads to authenticated;
 grant select,update on public.profiles to authenticated;
@@ -69,8 +69,16 @@ grant select,insert,update,delete on public.seller_stores to authenticated;
 grant select,update on public.message_reports to authenticated;
 
 drop policy if exists "Administrators read all profiles" on public.profiles;
-create policy "Administrators read all profiles" on public.profiles for select to authenticated using(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active));
+create policy "Administrators read all profiles" on public.profiles for select to authenticated using(public.is_active_marketplace_admin());
 drop policy if exists "Administrators read marketplace orders" on public.seller_orders;
-create policy "Administrators read marketplace orders" on public.seller_orders for select to authenticated using(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active));
+create policy "Administrators read marketplace orders" on public.seller_orders for select to authenticated using(public.is_active_marketplace_admin());
 drop policy if exists "Administrators read marketplace transactions" on public.marketplace_transactions;
-create policy "Administrators read marketplace transactions" on public.marketplace_transactions for select to authenticated using(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active));
+create policy "Administrators read marketplace transactions" on public.marketplace_transactions for select to authenticated using(public.is_active_marketplace_admin());
+
+-- Security-definer predicate avoids recursive profiles RLS when administrators list accounts.
+create or replace function public.is_active_marketplace_admin()
+returns boolean language sql stable security definer set search_path=public as $$
+ select exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active);
+$$;
+revoke all on function public.is_active_marketplace_admin() from public,anon;
+grant execute on function public.is_active_marketplace_admin() to authenticated;
