@@ -19,6 +19,7 @@ export function AuthProvider({ children }) {
   useEffect(()=>{
     if (!isSupabaseConfigured) { setLoading(false); return; }
     let alive=true;
+    let authEventReceived=false;
     const syncSession=async(next)=>{
       const current=++requestId.current;
       setSession(next);
@@ -34,11 +35,18 @@ export function AuthProvider({ children }) {
         if (alive && current===requestId.current) setLoading(false);
       }
     };
-    supabase.auth.getSession().then(({data,error})=>{
-      if (error) { if(alive){setSession(null);setProfile(null);setLoading(false);} return; }
-      if (alive) syncSession(data.session);
+    const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,next)=>{
+      if (!alive) return;
+      authEventReceived=true;
+      queueMicrotask(()=>{if(alive)syncSession(next)});
     });
-    const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,next)=>{if(alive) queueMicrotask(()=>syncSession(next));});
+    supabase.auth.getSession().then(({data,error})=>{
+      if (!alive || authEventReceived) return;
+      if (error) { setSession(null);setProfile(null);setLoading(false);return; }
+      syncSession(data.session);
+    }).catch(()=>{
+      if(alive&&!authEventReceived){setSession(null);setProfile(null);setLoading(false);}
+    });
     return()=>{alive=false;requestId.current++;subscription.unsubscribe();};
   },[]);
 
