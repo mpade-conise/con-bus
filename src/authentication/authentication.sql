@@ -27,7 +27,7 @@ drop policy if exists "Update own profile" on public.profiles;
 create policy "Update own profile" on public.profiles for update to authenticated using(auth.uid()=id) with check(auth.uid()=id);
 create or replace function public.prevent_profile_role_change() returns trigger language plpgsql as $$
 begin
- if new.role is distinct from old.role then raise exception 'Role changes require trusted administrator privileges.'; end if;
+ if new.role is distinct from old.role and coalesce(auth.role(),'') <> 'service_role' then raise exception 'Role changes require trusted administrator privileges.'; end if;
  return new;
 end; $$;
 drop trigger if exists protect_profile_role on public.profiles;
