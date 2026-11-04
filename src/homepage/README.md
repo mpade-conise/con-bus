@@ -41,3 +41,12 @@ Required product fields include `seller_id`, `name`, and `price`. Use `category_
 - Delivery is shown as pending until a delivery location and configured delivery rates are available; no unsupported fee is added to the total.
 - The cart proceeds to the protected `/checkout` review handoff. Actual address capture, order creation, stock reservation and payment processing are separate checkout/orders integrations and are not implemented by the cart module.
 
+
+## Search and discovery
+- Search published products by name, description, brand, tags and seller/store text.
+- Search public seller businesses by store name, description, city, region or country; select a business to view its products.
+- Search by category, with category navigation and category filtering.
+- Refine product results by MWK price range, seller location, stock availability and minimum rating.
+- Sort by newest, oldest, price, rating or popularity.
+- Recent searches are stored locally in the customer's browser; suggested terms are derived from available product categories and names.
+- Product discovery also includes featured, popular, recommended and latest product collections.
