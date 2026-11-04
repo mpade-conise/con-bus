@@ -33,6 +33,9 @@ using(customer_id=auth.uid()) with check(customer_id=auth.uid());
 drop policy if exists "Customers delete own product reviews" on public.reviews;
 create policy "Customers delete own product reviews" on public.reviews for delete to authenticated using(customer_id=auth.uid());
 
+drop policy if exists "Sellers read reviews for own products" on public.reviews;
+create policy "Sellers read reviews for own products" on public.reviews for select to authenticated using(exists(select 1 from public.products p where p.id=product_id and p.seller_id=auth.uid()));
+
 -- Sellers can respond only to reviews of their own products.
 drop policy if exists "Sellers respond to reviews of own products" on public.reviews;
 create policy "Sellers respond to reviews of own products" on public.reviews for update to authenticated
