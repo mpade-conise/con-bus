@@ -34,6 +34,11 @@ create table if not exists public.marketplace_transactions(
   updated_at timestamptz not null default now(),
   completed_at timestamptz
 );
+alter table public.marketplace_transactions add column if not exists provider_fee numeric(12,2) not null default 0 check(provider_fee>=0);
+alter table public.marketplace_transactions add column if not exists refunded_amount numeric(12,2) not null default 0 check(refunded_amount>=0);
+alter table public.marketplace_transactions drop constraint if exists marketplace_transactions_status_check;
+alter table public.marketplace_transactions add constraint marketplace_transactions_status_check
+ check(status in('pending','successful','failed','expired','refund_pending','partially_refunded','refunded'));
 create index if not exists marketplace_transactions_customer_idx on public.marketplace_transactions(customer_id,created_at desc);
 create index if not exists marketplace_transactions_status_idx on public.marketplace_transactions(status,created_at);
 
@@ -174,7 +179,7 @@ begin
   if coalesce(array_length(p_order_ids,1),0)=0 then raise exception 'Select at least one order to pay.'; end if;
   if (select count(distinct x) from unnest(p_order_ids) x)<>array_length(p_order_ids,1) then raise exception 'Duplicate order selected.'; end if;
   perform 1 from public.seller_orders where id=any(p_order_ids) and customer_id=v_uid for update;
-  if (select count(*) from public.seller_orders where id=any(p_order_ids) and customer_id=v_uid and status not in('cancelled','refunded') and payment_status in('pending','failed'))<>array_length(p_order_ids,1) then raise exception 'One or more orders cannot be paid.'; end if;
+  if (select count(*) from public.seller_orders where id=any(p_order_ids) and customer_id=v_uid and status in('pending','confirmed') and payment_status in('pending','failed'))<>array_length(p_order_ids,1) then raise exception 'One or more orders cannot be paid.'; end if;
   update public.marketplace_transactions t set status='expired',updated_at=now()
   where t.status='pending' and t.created_at<now()-interval '30 minutes' and exists(select 1 from public.payment_order_allocations a where a.transaction_id=t.id and a.order_id=any(p_order_ids));
   if exists(select 1 from public.marketplace_transactions t join public.payment_order_allocations a on a.transaction_id=t.id where t.status='pending' and a.order_id=any(p_order_ids)) then raise exception 'A payment is already in progress for this order. Wait for its result before retrying.'; end if;
