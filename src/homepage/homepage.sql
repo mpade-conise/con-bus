@@ -195,3 +195,16 @@ with check (exists (select 1 from public.profiles p where p.id = auth.uid() and 
 
 -- Product categories are also stored on each product as category/category_name for storefront compatibility.
 -- New sellers must create a seller_stores row and product rows from the seller dashboard.
+
+-- Explicit PostgREST privileges are required in addition to RLS policies.
+grant usage on schema public to anon, authenticated;
+grant select on public.product_categories to anon, authenticated;
+grant insert, update, delete on public.product_categories to authenticated;
+grant select on public.seller_stores to anon, authenticated;
+grant insert, update, delete on public.seller_stores to authenticated;
+grant select on public.products to anon, authenticated;
+grant insert, update, delete on public.products to authenticated;
+grant select on public.reviews to anon, authenticated;
+grant insert, update, delete on public.reviews to authenticated;
+grant select on public.promotional_banners to anon, authenticated;
+grant insert, update, delete on public.promotional_banners to authenticated;
