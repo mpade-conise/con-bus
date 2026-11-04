@@ -1,0 +1,2 @@
+import{Link}from"react-router-dom";import AuthLayout from"./AuthLayout.jsx";
+export default function DeactivatedAccount(){return <AuthLayout title="Account deactivated" subtitle="This account is currently inactive."><div className="auth-form"><p className="auth-warning">Your profile has been deactivated. Contact Market Hub support to request reactivation. Signing in again will not restore access.</p><Link to="/">Return to marketplace</Link></div></AuthLayout>;}
