@@ -72,7 +72,7 @@ export default function Homepage(){
    {filtered.length>0?<ProductGrid products={filtered} onQuickView={Q} onAdd={addToCart} loading={loading}/>:!loading&&<div className="mh-empty"><strong>No matching products found</strong><p>Try another keyword or adjust your filters.</p></div>}
   </section>
   <section className="mh-seller-callout"><div><span className="mh-eyebrow">SELL ON MARKET HUB</span><h2>Your products deserve to be discovered.</h2><p>Open your seller account and reach customers through one shared marketplace.</p></div><a href="/auth/register/seller">Start selling <ArrowRight size={16}/></a></section>
-  <footer className="mh-footer"><a className="mh-brand" href="/"><span>MH</span>market<b>hub</b></a><p>© {new Date().getFullYear()} Market Hub. Discover. Connect. Shop.</p><div><a href="/auth/login">Sign in</a><a href="/auth/register/customer">Create account</a></div></footer>
+  <footer className="mh-footer"><a className="mh-brand" href="/" aria-label="Market Hub home"><img className="mh-brand-logo" src="/market-hub-logo.svg" alt=""/><span className="mh-brand-name">market<b>hub</b></span></a><p>© {new Date().getFullYear()} Market Hub. Discover. Connect. Shop.</p><div><a href="/auth/login">Sign in</a><a href="/auth/register/customer">Create account</a></div></footer>
   <QuickView product={quick} onClose={()=>Q(null)} onAdd={addToCart}/><CartDrawer open={cartOpen} onClose={()=>CO(false)}/>
  </main>;
 }
