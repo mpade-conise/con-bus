@@ -15,7 +15,7 @@ Deno.serve(async req=>{
   const{data:intent,error:intentError}=await userClient.rpc("create_marketplace_payment_intent",{p_order_ids:orderIds,p_method:method});
   if(intentError)throw intentError;
   const serviceClient=createClient(url,service);
-  const callbackUrl=url+"/functions/v1/paychangu-webhook";
+  const callbackUrl=url+"/functions/v1/payment-callback";
   const payload={amount:String(intent.amount),currency:"MWK",email:intent.email||user.email||"",first_name:intent.first_name||"Customer",last_name:intent.last_name||"",callback_url:callbackUrl,return_url:appUrl.replace(/\/$/,"")+"/payment-result?tx_ref="+encodeURIComponent(intent.tx_ref),tx_ref:intent.tx_ref,customization:{title:"Marketplace order payment",description:"Payment for marketplace order(s)"},meta:{customer_id:user.id,transaction_id:intent.transaction_id,preferred_method:method,order_ids:orderIds}};
   const response=await fetch("https://api.paychangu.com/payment",{method:"POST",headers:{"Accept":"application/json","Content-Type":"application/json","Authorization":"Bearer "+secret},body:JSON.stringify(payload)});
   const result=await response.json().catch(()=>({}));
