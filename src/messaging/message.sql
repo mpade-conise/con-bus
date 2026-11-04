@@ -130,7 +130,8 @@ drop trigger if exists guard_conversation_update on public.conversations;
 create trigger guard_conversation_update before update on public.conversations for each row execute function public.guard_conversation_participant_update();
 
 revoke update on public.conversations from authenticated;
-grant select,update(customer_deleted_at,seller_deleted_at) on public.conversations to authenticated;
+grant select on public.conversations to authenticated;
+grant update(customer_deleted_at,seller_deleted_at) on public.conversations to authenticated;
 revoke update on public.messages,public.user_blocks,public.message_reports from authenticated;
 grant select,insert on public.messages to authenticated;
 grant update(read_at) on public.messages to authenticated;
