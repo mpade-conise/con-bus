@@ -1,2 +1,5 @@
 [functions.paychangu-webhook]
 verify_jwt = false
+
+[functions.payment-callback]
+verify_jwt = false
