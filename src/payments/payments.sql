@@ -23,7 +23,8 @@ create table if not exists public.marketplace_transactions(
   amount numeric(12,2) not null check(amount>0),
   provider_fee numeric(12,2) not null default 0 check(provider_fee>=0),
   currency text not null default 'MWK' check(currency='MWK'),
-  status text not null default 'pending' check(status in('pending','successful','failed','expired','refund_pending','refunded')),
+  status text not null default 'pending' check(status in('pending','successful','failed','expired','refund_pending','partially_refunded','refunded')),
+  refunded_amount numeric(12,2) not null default 0 check(refunded_amount>=0),
   checkout_url text,
   provider_reference text,
   provider_charge_id text,
@@ -289,9 +290,9 @@ grant execute on function public.request_marketplace_refund(uuid,text) to authen
 create or replace function public.notify_marketplace_payment_change()
 returns trigger language plpgsql security definer set search_path=public as $$
 begin
-  if new.status is distinct from old.status and new.status in('successful','failed','refunded') then
+  if new.status is distinct from old.status and new.status in('successful','failed','partially_refunded','refunded') then
     insert into public.marketplace_notifications(user_id,notification_type,title,message,related_id)
-    values(new.customer_id,'payment_'||new.status,'Payment '||new.status,case when new.status='successful' then 'Your payment was verified successfully.' when new.status='failed' then 'Your payment failed. You can retry from your order history.' else 'Your payment refund has been recorded.' end,new.id);
+    values(new.customer_id,'payment_'||new.status,'Payment '||new.status,case when new.status='successful' then 'Your payment was verified successfully.' when new.status='failed' then 'Your payment failed. You can retry from your order history.' when new.status='partially_refunded' then 'A partial refund has been recorded for your payment.' else 'Your payment has been fully refunded.' end,new.id);
     if new.status='successful' then
       insert into public.marketplace_notifications(user_id,notification_type,title,message,related_id)
       select distinct a.seller_id,'seller_payment_received','Payment received','A customer payment for one of your orders has been verified.',new.id from public.payment_order_allocations a where a.transaction_id=new.id;
@@ -357,10 +358,7 @@ end $$;
 
 -- Allow administrators to reconcile a refund only after confirming the provider-side refund.
 drop policy if exists "Administrators update payment transactions" on public.marketplace_transactions;
-create policy "Administrators update payment transactions" on public.marketplace_transactions for update to authenticated
-using(exists(select 1 from public.profiles where id=auth.uid() and role='administrator'))
-with check(exists(select 1 from public.profiles where id=auth.uid() and role='administrator'));
-grant update(status,provider_reference,provider_status,failure_reason,updated_at,completed_at) on public.marketplace_transactions to authenticated;
+revoke update on public.marketplace_transactions from authenticated;
 grant select,update on public.marketplace_settings to authenticated;
 
 create or replace function public.reverse_seller_earnings_on_refund()
@@ -378,10 +376,36 @@ begin
 end;
 $$;
 drop trigger if exists reverse_seller_earnings_refund_trigger on public.marketplace_transactions;
-create trigger reverse_seller_earnings_refund_trigger after update of status on public.marketplace_transactions
-for each row execute function public.reverse_seller_earnings_on_refund();
+drop function if exists public.reverse_seller_earnings_on_refund();
 
 -- Explicit client grants for notification acknowledgements and administrator review actions.
 grant update(read_at) on public.marketplace_notifications to authenticated;
 grant update(status,processed_at,admin_note) on public.seller_withdrawals to authenticated;
 grant update(status,admin_note,updated_at) on public.marketplace_refund_requests to authenticated;
+
+-- Refunds are allocated per seller order, so a multi-seller checkout can be partially refunded safely.
+create or replace function public.apply_marketplace_refund()
+returns trigger language plpgsql security definer set search_path=public as $$
+declare v_refunded numeric(12,2);
+begin
+ if new.status='refunded' and old.status is distinct from new.status then
+   update public.seller_orders set payment_status='refunded' where id=new.order_id;
+   update public.seller_earnings set status='reversed',updated_at=now() where order_id=new.order_id and status in('pending','available');
+   update public.marketplace_transactions set refunded_amount=least(amount,refunded_amount+new.amount),updated_at=now()
+   where id=new.transaction_id returning refunded_amount into v_refunded;
+   update public.marketplace_transactions set status=case when v_refunded>=amount then 'refunded' else 'partially_refunded' end,provider_status='refund_confirmed_by_admin',updated_at=now()
+   where id=new.transaction_id;
+   insert into public.payment_reconciliation(transaction_id,tx_ref,provider_reference,expected_amount,received_amount,currency,result,notes,reconciled_by)
+   select id,tx_ref,provider_reference,new.amount,new.amount,currency,'refund_confirmed','Refund processed externally and confirmed by administrator.',auth.uid()
+   from public.marketplace_transactions where id=new.transaction_id;
+   insert into public.marketplace_notifications(user_id,notification_type,title,message,related_id)
+   values(new.customer_id,'refund_confirmed','Refund confirmed','Your refund has been confirmed by the marketplace.',new.id);
+   insert into public.marketplace_notifications(user_id,notification_type,title,message,related_id)
+   values(new.seller_id,'seller_refund_confirmed','Customer refund confirmed','A refund was confirmed for one of your orders. The related earnings have been reversed if not yet withdrawn.',new.id);
+ end if;
+ return new;
+end;
+$$;
+drop trigger if exists marketplace_refund_apply_trigger on public.marketplace_refund_requests;
+create trigger marketplace_refund_apply_trigger after update of status on public.marketplace_refund_requests
+for each row execute function public.apply_marketplace_refund();
