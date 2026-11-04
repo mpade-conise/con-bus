@@ -19,7 +19,7 @@ export default function SellerDashboard(){
  db.from("seller_transactions").select("*").eq("seller_id",sellerId).order("created_at",{ascending:false})
  ]);for(const r of results)if(r.error)throw r.error;
  setStore({...emptyStore,...(results[0].data||{})});setProducts(results[1].data||[]);setCategories(results[2].data||[]);setOrders(results[3].data||[]);setMessages(results[4].data||[]);setTransactions(results[5].data||[]);
- const ids=[...new Set((results[3].data||[]).map(o=>o.customer_id).filter(Boolean))];if(ids.length){const{data,error:e}=await db.from("profiles").select("id,full_name").in("id",ids);if(e)throw e;setCustomers(data||[])}else setCustomers([]);
+ const buyerMap=new Map();for(const o of results[3].data||[]){if(o.customer_id&&!buyerMap.has(o.customer_id))buyerMap.set(o.customer_id,{id:o.customer_id,full_name:o.customer_name||"Customer"});}setCustomers([...buyerMap.values()]);
  }catch(e){setError(e.message||"Could not load seller data.");}finally{setLoading(false)}},[db,sellerId]);
  useEffect(()=>{load()},[load]);
  const stats=useMemo(()=>{const delivered=orders.filter(o=>o.status==="delivered");const revenue=delivered.reduce((s,o)=>s+Number(o.total_amount||o.total||0),0);return{products:products.length,active:products.filter(p=>p.status==="published"&&p.is_active!==false).length,orders:orders.length,pending:orders.filter(o=>o.status==="pending").length,revenue,customers:new Set(orders.map(o=>o.customer_id).filter(Boolean)).size,unread:messages.filter(m=>!m.is_read).length,stock:products.reduce((s,p)=>s+Number(p.stock||0),0),delivered:delivered.length}},[products,orders,messages]);
