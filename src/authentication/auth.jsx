@@ -14,6 +14,7 @@ import Logout from"./Logout.jsx";
 import ProtectedRoute from"./ProtectedRoute.jsx";
 import DeactivatedAccount from"./DeactivatedAccount.jsx";
 import Dashboard from"./Dashboard.jsx";
+import SecurityCenter from"./SecurityCenter.jsx";
 
 export const authRoutes=[
  <Route key="login" path="/auth/login" element={<Login/>}/>,
@@ -28,6 +29,7 @@ export const authRoutes=[
  <Route key="profile" path="/account/profile" element={<ProtectedRoute><ProfileManagement/></ProtectedRoute>}/>,
  <Route key="profile-picture" path="/account/profile-picture" element={<ProtectedRoute><ProfilePictureUpload/></ProtectedRoute>}/>,
  <Route key="change-password" path="/account/change-password" element={<ProtectedRoute><ChangePassword/></ProtectedRoute>}/>,
+ <Route key="account-security" path="/account/security" element={<ProtectedRoute><SecurityCenter/></ProtectedRoute>}/>,
  <Route key="deactivate" path="/account/deactivate" element={<ProtectedRoute><AccountDeactivation/></ProtectedRoute>}/>,
  <Route key="logout" path="/auth/logout" element={<ProtectedRoute><Logout/></ProtectedRoute>}/>
 ];
