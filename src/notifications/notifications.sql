@@ -47,7 +47,14 @@ create or replace function public.create_marketplace_notification(
 declare v_id uuid;
 begin
  if p_user_id is null or not exists(select 1 from public.profiles where id=p_user_id and is_active=true) then return null; end if;
- if exists(select 1 from public.notification_preferences where user_id=p_user_id and in_app_enabled=false) then return null; end if;
+ if exists(select 1 from public.notification_preferences where user_id=p_user_id and (
+  not in_app_enabled
+  or (not order_updates and p_type in('new_order','order_placed','order_confirmed','order_delivery','order_delivered','order_cancelled','order_refunded','new_customer'))
+  or (not payment_updates and p_type in('payment_success','payment_received','payment_failed'))
+  or (not messages and p_type='new_message')
+  or (not product_alerts and p_type in('product_available','low_stock'))
+  or (not promotions and p_type='promotion')
+ )) then return null; end if;
  insert into public.marketplace_notifications(user_id,notification_type,title,message,related_id,action_url,priority,metadata)
  values(p_user_id,left(p_type,80),left(p_title,160),left(p_message,1000),p_related_id,p_action_url,coalesce(p_priority,'normal'),coalesce(p_metadata,'{}'::jsonb))
  returning id into v_id;
@@ -61,6 +68,7 @@ begin
  v_order:=coalesce(new.order_number,'Order '||left(new.id::text,8));
  if tg_op='INSERT' then
   perform public.create_marketplace_notification(new.seller_id,'new_order','New order received',v_order||' has been placed. Review and process the order.',new.id,'/seller', 'high',jsonb_build_object('order_number',v_order));
+  perform public.create_marketplace_notification(new.customer_id,'order_placed','Order placed',v_order||' has been submitted to the seller.',new.id,'/orders','normal',jsonb_build_object('order_number',v_order));
   if new.customer_id is not null and not exists(select 1 from public.seller_orders o where o.seller_id=new.seller_id and o.customer_id=new.customer_id and o.id<>new.id) then
    select coalesce(full_name,'A new customer') into v_name from public.profiles where id=new.customer_id;
    perform public.create_marketplace_notification(new.seller_id,'new_customer','New customer',coalesce(v_name,'A new customer')||' placed their first order with your store.',new.customer_id,'/seller','normal','{}'::jsonb);
