@@ -96,10 +96,21 @@ grant update(status,seller_note) on public.seller_orders to authenticated;
 grant select,update(is_read) on public.seller_messages to authenticated;
 grant select on public.seller_transactions to authenticated;
 
+-- Extended product catalogue fields. Safe to run on an existing products table.
+alter table public.products add column if not exists sku text;
+alter table public.products add column if not exists condition text not null default 'new' check(condition in('new','used','refurbished'));
+alter table public.products add column if not exists availability_status text not null default 'available' check(availability_status in('available','out_of_stock','preorder'));
+alter table public.products add column if not exists visibility text not null default 'public' check(visibility in('public','private'));
+alter table public.products add column if not exists tags text[] not null default '{}';
+alter table public.products add column if not exists specifications jsonb not null default '[]'::jsonb;
+alter table public.products add column if not exists variations jsonb not null default '[]'::jsonb;
+create unique index if not exists products_seller_sku_unique on public.products(seller_id,sku) where sku is not null and sku <> '';
+create index if not exists products_public_catalogue_idx on public.products(created_at desc) where is_active and status='published' and visibility='public';
+
 -- Sellers may edit listing content and stock, but cannot forge sales, views, ratings or recommendation metrics.
 revoke insert,update on public.products from authenticated;
-grant insert(seller_id,name,title,description,brand,category,category_name,price,discount_price,sale_price,image_url,images,stock,is_active,status) on public.products to authenticated;
-grant update(name,title,description,brand,category,category_name,price,discount_price,sale_price,image_url,images,stock,is_active,status) on public.products to authenticated;
+grant insert(seller_id,name,title,description,brand,category,category_name,price,discount_price,sale_price,image_url,images,stock,is_active,status,sku,condition,availability_status,visibility,is_featured,tags,specifications,variations) on public.products to authenticated;
+grant update(name,title,description,brand,category,category_name,price,discount_price,sale_price,image_url,images,stock,is_active,status,sku,condition,availability_status,visibility,is_featured,tags,specifications,variations) on public.products to authenticated;
 
 -- Store/product uploads are publicly viewable but only the owning authenticated seller can upload/manage their own path.
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
