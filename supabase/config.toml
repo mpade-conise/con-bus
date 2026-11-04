@@ -1,0 +1,2 @@
+[functions.paychangu-webhook]
+verify_jwt = false
