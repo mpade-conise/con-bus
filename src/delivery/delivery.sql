@@ -82,10 +82,15 @@ begin
  if p_personnel_id is not null then select * into v_person from public.seller_delivery_personnel where id=p_personnel_id and seller_id=auth.uid() and is_active;if not found then raise exception 'Select an active delivery person from your own team.';end if;end if;
  if p_delivery_status in('assigned','picked_up','in_transit') and v_order.delivery_method='home_delivery' and p_personnel_id is null and v_order.delivery_person_id is null then raise exception 'Assign a delivery person before dispatch.';end if;
  if p_delivery_status in('delivered','collected') then
+  if v_order.status not in('ready_for_delivery','shipped') then raise exception 'The order must be ready for dispatch before delivery can be completed.';end if;
+  if p_delivery_status='delivered' and v_order.delivery_method<>'home_delivery' then raise exception 'Use collected to complete a pickup order.';end if;
+  if p_delivery_status='collected' and v_order.delivery_method<>'pickup' then raise exception 'Use delivered to complete a home delivery order.';end if;
   if v_order.status='ready_for_delivery' then update public.seller_orders set status='shipped' where id=p_order_id;end if;
   if (select status from public.seller_orders where id=p_order_id)='shipped' then update public.seller_orders set status='delivered' where id=p_order_id;end if;
  end if;
+ if p_delivery_status='in_transit' and v_order.status not in('ready_for_delivery','shipped') then raise exception 'The order must be ready for dispatch before it can be sent.';end if;
  if p_delivery_status='in_transit' and v_order.status='ready_for_delivery' then update public.seller_orders set status='shipped' where id=p_order_id;end if;
+ if p_delivery_status='ready_for_pickup' and (v_order.delivery_method<>'pickup' or v_order.status not in('processing','ready_for_delivery')) then raise exception 'This pickup order is not ready for collection.';end if;
  v_old:=v_order.delivery_status;
  update public.seller_orders set delivery_status=p_delivery_status,tracking_number=coalesce(nullif(trim(p_tracking_number),''),tracking_number),delivery_person_id=coalesce(p_personnel_id,delivery_person_id),estimated_delivery_at=coalesce(p_estimated_delivery_at,estimated_delivery_at),delivered_at=case when p_delivery_status in('delivered','collected') then now() else delivered_at end where id=p_order_id;
  if p_personnel_id is not null then insert into public.seller_delivery_assignments(order_id,seller_id,personnel_id,assigned_by,notes) values(p_order_id,auth.uid(),p_personnel_id,auth.uid(),nullif(p_note,''));end if;
@@ -99,9 +104,17 @@ returns void language plpgsql security definer set search_path=public as $$
 declare v_order public.seller_orders%rowtype;
 begin
  select * into v_order from public.seller_orders where id=p_order_id and customer_id=auth.uid() for update;
- if not found or v_order.status<>'shipped' or v_order.delivery_status not in('in_transit','delivered') then raise exception 'This order is not awaiting delivery confirmation.';end if;
- update public.seller_orders set status='delivered',delivery_status='delivered',delivered_at=coalesce(delivered_at,now()) where id=p_order_id;
- insert into public.seller_order_events(order_id,actor_id,event_type,note) values(p_order_id,auth.uid(),'customer_delivery_confirmed','Customer confirmed receipt of the order.');
+ if not found then raise exception 'Order not found.';end if;
+ if v_order.delivery_method='pickup' then
+  if v_order.status<>'ready_for_delivery' or v_order.delivery_status<>'ready_for_pickup' then raise exception 'This pickup order is not ready for collection confirmation.';end if;
+  update public.seller_orders set status='shipped' where id=p_order_id;
+  update public.seller_orders set status='delivered',delivery_status='collected',delivered_at=now() where id=p_order_id;
+  insert into public.seller_order_events(order_id,actor_id,event_type,note) values(p_order_id,auth.uid(),'customer_pickup_confirmed','Customer confirmed collection of the order.');
+ else
+  if v_order.status<>'shipped' or v_order.delivery_status not in('in_transit','delivered') then raise exception 'This order is not awaiting delivery confirmation.';end if;
+  update public.seller_orders set status='delivered',delivery_status='delivered',delivered_at=coalesce(delivered_at,now()) where id=p_order_id;
+  insert into public.seller_order_events(order_id,actor_id,event_type,note) values(p_order_id,auth.uid(),'customer_delivery_confirmed','Customer confirmed receipt of the order.');
+ end if;
 end;$$;
 revoke all on function public.confirm_marketplace_delivery(uuid) from public,anon;
 grant execute on function public.confirm_marketplace_delivery(uuid) to authenticated;
