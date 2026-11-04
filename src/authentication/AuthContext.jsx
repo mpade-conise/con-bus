@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
   async function loadProfile(user) {
     if (!user || !isSupabaseConfigured) { setProfile(null); return; }
     const {data}=await supabase.from("profiles").select("*").eq("id",user.id).maybeSingle();
-    setProfile(data || {id:user.id,email:user.email,role:user.user_metadata?.role || "customer"});
+    setProfile(data || {id:user.id,email:user.email,role:"customer"});
   }
 
   useEffect(()=>{
