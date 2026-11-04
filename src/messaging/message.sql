@@ -108,6 +108,8 @@ create policy "Recipients mark messages read" on public.messages for update to a
 
 drop policy if exists "Users manage blocks they create" on public.user_blocks;
 create policy "Users manage blocks they create" on public.user_blocks for all to authenticated using(blocker_id=auth.uid()) with check(blocker_id=auth.uid());
+drop policy if exists "Users can see blocks involving themselves" on public.user_blocks;
+create policy "Users can see blocks involving themselves" on public.user_blocks for select to authenticated using(blocker_id=auth.uid() or blocked_id=auth.uid());
 drop policy if exists "Users report messages they receive" on public.message_reports;
 create policy "Users report messages they receive" on public.message_reports for insert to authenticated with check(reporter_id=auth.uid() and exists(select 1 from public.messages m join public.conversations c on c.id=m.conversation_id where m.id=message_id and m.sender_id<>auth.uid() and (c.customer_id=auth.uid() or c.seller_id=auth.uid())));
 drop policy if exists "Administrators review message reports" on public.message_reports;
