@@ -1,2 +1,2 @@
-import{Route}from"react-router-dom";import ProtectedRoute from"../authentication/ProtectedRoute.jsx";import SellerDashboard from"./SellerDashboard.jsx";
-export const sellerRoutes=[<Route key="seller" path="/seller/*" element={<ProtectedRoute roles={["seller"]}><SellerDashboard/></ProtectedRoute>}/>];
+import{Route}from"react-router-dom";import ProtectedRoute from"../authentication/ProtectedRoute.jsx";import SellerDashboard from"./SellerDashboard.jsx";import DeliveryManagement from"../delivery/DeliveryManagement.jsx";
+export const sellerRoutes=[<Route key="seller-delivery" path="/seller/delivery" element={<ProtectedRoute roles={["seller"]}><DeliveryManagement/></ProtectedRoute>}/>,<Route key="seller" path="/seller/*" element={<ProtectedRoute roles={["seller"]}><SellerDashboard/></ProtectedRoute>}/>];
