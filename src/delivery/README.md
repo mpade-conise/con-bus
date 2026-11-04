@@ -1,6 +1,6 @@
 # Delivery and shipping management
 
-Run `src/delivery/delivery.sql` in Supabase SQL Editor after the existing authentication, homepage, sellers, orders, and payments migrations. This is a new incremental migration; do not rerun the previous migrations.
+Run `src/delivery/delivery.sql` in Supabase SQL Editor after the existing authentication, homepage, sellers, orders, and payments migrations. This is a new incremental migration; do not rerun the previous migrations. Coordinate this migration with deployment of the latest frontend: the new checkout calls `place_marketplace_order_with_delivery`, and the migration revokes direct access to the legacy order-placement RPC. Apply the migration and deploy the updated frontend as one release; checkout will not work correctly if only one side is updated.
 
 ## Features
 - Customer address book with multiple saved addresses and a default address.
