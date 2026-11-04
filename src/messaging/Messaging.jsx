@@ -1,6 +1,6 @@
 import{useCallback,useEffect,useMemo,useRef,useState}from"react";
 import{Link,useLocation,useNavigate}from"react-router-dom";
-import{ArrowLeft,ArrowUpRight,Check,CheckCheck,FileText,Flag,Image,MessageCircle,MoreHorizontal,Paperclip,Search,Send,ShieldBan,Trash2,X}from"lucide-react";
+import{ArrowLeft,ArrowUpRight,Check,CheckCheck,FileText,Flag,MessageCircle,MoreHorizontal,Paperclip,Search,Send,ShieldBan,Trash2,X}from"lucide-react";
 import{useAuth}from"../authentication/AuthContext.jsx";
 import{requireSupabase}from"../authentication/supabase.js";
 import"./messaging.css";
@@ -11,7 +11,7 @@ export default function Messaging(){
  const{user,role}=useAuth(),db=requireSupabase(),location=useLocation(),navigate=useNavigate();
  const[conversations,setConversations]=useState([]),[profiles,setProfiles]=useState({}),[products,setProducts]=useState({});
  const[activeId,setActiveId]=useState(""),[messages,setMessages]=useState([]),[draft,setDraft]=useState(""),[file,setFile]=useState(null),[search,setSearch]=useState(""),[loading,setLoading]=useState(true),[sending,setSending]=useState(false),[error,setError]=useState(""),[menu,setMenu]=useState(false),[online,setOnline]=useState(false),[blocked,setBlocked]=useState(false),[blockedByMe,setBlockedByMe]=useState(false);
- const bottom=useRef(null),fileInput=useRef(null),presence=useRef(null);
+ const bottom=useRef(null),fileInput=useRef(null);
  const active=conversations.find(c=>c.id===activeId)||null,otherId=active?(active.customer_id===user.id?active.seller_id:active.customer_id):"";
  const other=profiles[otherId],product=active?products[active.product_id]:null;
  const load=useCallback(async()=>{if(!user)return;setLoading(true);setError("");try{
@@ -28,7 +28,7 @@ export default function Messaging(){
  useEffect(()=>{const q=new URLSearchParams(location.search),other=q.get("seller")||q.get("customer"),productId=q.get("product");if(!other||!user||!role)return;let live=true;(async()=>{try{const{data,error:e}=await db.rpc("start_marketplace_conversation",{p_other_user_id:other,p_product_id:productId||null});if(e)throw e;if(live){await load();setActiveId(data);navigate("/messages",{replace:true})}}catch(e){if(live)setError(e.message)}})();return()=>{live=false}},[location.search,user?.id,role,db,load,navigate]);
  useEffect(()=>{if(!activeId)return;let live=true;(async()=>{const{data,error:e}=await db.from("messages").select("*").eq("conversation_id",activeId).order("created_at",{ascending:true}).limit(300);if(e){setError(e.message);return}if(live)setMessages(data||[]);const{error:readError}=await db.from("messages").update({read_at:new Date().toISOString()}).eq("conversation_id",activeId).neq("sender_id",user.id).is("read_at",null);if(readError)setError(readError.message);const{data:blocks}=await db.from("user_blocks").select("blocker_id,blocked_id").or("and(blocker_id.eq."+user.id+",blocked_id.eq."+otherId+"),and(blocker_id.eq."+otherId+",blocked_id.eq."+user.id+")");if(live){setBlocked(!!blocks?.length);setBlockedByMe(!!blocks?.some(x=>x.blocker_id===user.id))}})();const channel=db.channel("messages-"+activeId).on("postgres_changes",{event:"*",schema:"public",table:"messages",filter:"conversation_id=eq."+activeId},()=>{db.from("messages").select("*").eq("conversation_id",activeId).order("created_at",{ascending:true}).limit(300).then(({data})=>{if(live)setMessages(data||[])})}).subscribe();return()=>{live=false;db.removeChannel(channel)}},[activeId,db,user?.id,otherId]);
  useEffect(()=>{const channel=db.channel("inbox-updates-"+user.id).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},()=>load()).subscribe();return()=>{db.removeChannel(channel)}},[db,user?.id,load]);
- useEffect(()=>{if(!activeId||!otherId)return;const channel=db.channel("presence-"+activeId,{config:{presence:{key:user.id}}});presence.current=channel;channel.on("presence",{event:"sync"},()=>setOnline(Object.keys(channel.presenceState()).some(k=>k===otherId))).subscribe(async status=>{if(status==="SUBSCRIBED")await channel.track({online:true,last_seen:new Date().toISOString()})});return()=>{db.removeChannel(channel);presence.current=null;setOnline(false)}},[activeId,otherId,db,user?.id]);
+ useEffect(()=>{if(!activeId||!otherId)return;const channel=db.channel("presence-"+activeId,{config:{presence:{key:user.id}}});channel.on("presence",{event:"sync"},()=>setOnline(Object.keys(channel.presenceState()).some(k=>k===otherId))).subscribe(async status=>{if(status==="SUBSCRIBED")await channel.track({online:true,last_seen:new Date().toISOString()})});return()=>{db.removeChannel(channel);setOnline(false)}},[activeId,otherId,db,user?.id]);
  useEffect(()=>{bottom.current?.scrollIntoView({behavior:"smooth"})},[messages]);
  const unread=useMemo(()=>conversations.reduce((n,c)=>n+Number(c.unread_count||0),0),[conversations]);
  const visible=conversations.filter(c=>{const id=c.customer_id===user.id?c.seller_id:c.customer_id;return(profiles[id]?.full_name||"").toLowerCase().includes(search.toLowerCase())||(products[c.product_id]?.name||"").toLowerCase().includes(search.toLowerCase())});
