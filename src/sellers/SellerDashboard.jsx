@@ -3,7 +3,8 @@ import{useCallback,useEffect,useMemo,useState}from"react";import{Link,useNavigat
 const money=n=>new Intl.NumberFormat("en-MW",{style:"currency",currency:"MWK",maximumFractionDigits:0}).format(Number(n)||0);
 const date=v=>v?new Date(v).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}):"—";
 const sections=[["overview","Overview",LayoutDashboard],["store","Store profile",Store],["products","Products",Package],["categories","Categories",Boxes],["orders","Orders",ClipboardList],["messages","Messages",MessageSquare],["reports","Sales reports",BarChart3],["transactions","Transactions",Coins],["customers","Customers",Users]];
-const statuses=["pending","confirmed","processing","ready_for_delivery","shipped","delivered","cancelled","refunded"];\nconst nextStatuses={pending:["confirmed","cancelled"],confirmed:["processing","cancelled"],processing:["ready_for_delivery","cancelled"],ready_for_delivery:["shipped","cancelled"],shipped:["delivered"],delivered:[],cancelled:[],refunded:[]};
+const statuses=["pending","confirmed","processing","ready_for_delivery","shipped","delivered","cancelled","refunded"];
+const nextStatuses={pending:["confirmed","cancelled"],confirmed:["processing","cancelled"],processing:["ready_for_delivery","cancelled"],ready_for_delivery:["shipped","cancelled"],shipped:["delivered"],delivered:[],cancelled:[],refunded:[]};
 const emptyProduct={name:"",description:"",category:"",price:"",discount_price:"",stock:"0",status:"draft",image_url:""};
 const emptyStore={store_name:"",description:"",logo_url:"",banner_url:"",city:"",region:"",country:"Malawi",contact_email:"",website_url:""};
 export default function SellerDashboard(){
