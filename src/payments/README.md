@@ -19,8 +19,9 @@ Official documentation:
 ## Edge Functions
 Deploy these Supabase Edge Functions from the repository:
 - `supabase/functions/create-payment/index.ts`: authenticates the customer, creates a database payment intent, and requests a PayChangu hosted checkout session.
-- `supabase/functions/paychangu-webhook/index.ts`: validates the PayChangu HMAC-SHA256 Signature header, verifies the transaction directly with PayChangu, checks the exact reference, amount and MWK currency, and finalizes the payment once.
-- `supabase/functions/verify-payment/index.ts`: allows the signed-in customer return page to re-check a pending payment directly with PayChangu if the webhook has not arrived.
+- `supabase/functions/payment-callback/index.ts`: receives the callback URL attached to each new marketplace checkout, verifies the transaction directly with PayChangu, checks the exact reference, amount and MWK currency, finalizes it once, and returns the customer to the marketplace.
+- `supabase/functions/paychangu-webhook/index.ts`: optional signed webhook receiver for cases where this marketplace can be configured as the merchant account's global webhook.
+- `supabase/functions/verify-payment/index.ts`: allows the signed-in customer return page to re-check a pending payment directly with PayChangu if the callback has not completed.
 
 Set Supabase Edge Function secrets (never put these in Vite variables or commit them):
 - `PAYCHANGU_SECRET_KEY`: PayChangu API secret key.
@@ -36,12 +37,11 @@ supabase link --project-ref qbqmhcoxmbpcjredofxs
 supabase secrets set PAYCHANGU_SECRET_KEY=... PAYCHANGU_WEBHOOK_SECRET=... APP_URL=https://your-marketplace-domain
 supabase functions deploy create-payment
 supabase functions deploy verify-payment
+supabase functions deploy payment-callback
 supabase functions deploy paychangu-webhook
 ```
 
-Configure the PayChangu dashboard webhook URL as:
-`https://qbqmhcoxmbpcjredofxs.supabase.co/functions/v1/paychangu-webhook`
-Enable payment events and use the Web Secret from the PayChangu dashboard. The webhook function has JWT verification disabled in `supabase/config.toml`, but it rejects requests without a valid HMAC signature.
+The marketplace sets its own `callback_url` on every payment request to `https://qbqmhcoxmbpcjredofxs.supabase.co/functions/v1/payment-callback`. This is a per-transaction callback and does not require replacing the merchant account's existing global webhook URL. **Leave any webhook URL already used by another website unchanged.** The callback independently verifies each transaction against PayChangu before updating orders. The separate `paychangu-webhook` endpoint is retained for a future global-webhook setup; it has JWT verification disabled in `supabase/config.toml` and requires a valid HMAC signature.
 
 ## Connected flows
 - Customer selects Airtel Money, TNM Mpamba, Visa/Mastercard or cash on delivery at `/checkout`.
