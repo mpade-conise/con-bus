@@ -96,6 +96,11 @@ grant update(status,seller_note) on public.seller_orders to authenticated;
 grant select,update(is_read) on public.seller_messages to authenticated;
 grant select on public.seller_transactions to authenticated;
 
+-- Sellers may edit listing content and stock, but cannot forge sales, views, ratings or recommendation metrics.
+revoke insert,update on public.products from authenticated;
+grant insert(seller_id,name,title,description,brand,category,category_name,price,discount_price,sale_price,image_url,images,stock,is_active,status) on public.products to authenticated;
+grant update(name,title,description,brand,category,category_name,price,discount_price,sale_price,image_url,images,stock,is_active,status) on public.products to authenticated;
+
 -- Store/product uploads are publicly viewable but only the owning authenticated seller can upload/manage their own path.
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
 values('seller-assets','seller-assets',true,5242880,array['image/jpeg','image/png','image/webp'])
@@ -105,8 +110,8 @@ create policy "Sellers upload own assets" on storage.objects for insert to authe
 with check(bucket_id='seller-assets' and (storage.foldername(name))[1]=auth.uid()::text and exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='seller' and p.is_active));
 drop policy if exists "Sellers update own assets" on storage.objects;
 create policy "Sellers update own assets" on storage.objects for update to authenticated
-using(bucket_id='seller-assets' and (storage.foldername(name))[1]=auth.uid()::text)
-with check(bucket_id='seller-assets' and (storage.foldername(name))[1]=auth.uid()::text);
+using(bucket_id='seller-assets' and (storage.foldername(name))[1]=auth.uid()::text and exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='seller' and p.is_active))
+with check(bucket_id='seller-assets' and (storage.foldername(name))[1]=auth.uid()::text and exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='seller' and p.is_active));
 drop policy if exists "Sellers delete own assets" on storage.objects;
 create policy "Sellers delete own assets" on storage.objects for delete to authenticated
-using(bucket_id='seller-assets' and (storage.foldername(name))[1]=auth.uid()::text);
+using(bucket_id='seller-assets' and (storage.foldername(name))[1]=auth.uid()::text and exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='seller' and p.is_active));
