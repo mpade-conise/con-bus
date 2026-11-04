@@ -74,7 +74,7 @@ create policy "Customers delete own review images" on storage.objects for delete
 
 -- Keep product aggregate ratings synchronized with approved reviews only.
 create or replace function public.guard_product_review_update()
-returns trigger language plpgsql security definer set search_path=public as $
+returns trigger language plpgsql security definer set search_path=public as $$
 begin
  if auth.uid()=old.customer_id then
    if new.product_id is distinct from old.product_id or new.customer_id is distinct from old.customer_id or new.customer_name is distinct from old.customer_name or new.status is distinct from old.status or new.seller_response is distinct from old.seller_response or new.seller_response_at is distinct from old.seller_response_at or new.created_at is distinct from old.created_at then raise exception 'Customers may edit only their own rating, comment and review photos.'; end if;
@@ -87,7 +87,7 @@ begin
  end if;
  return new;
 end;
-$;
+$$;
 drop trigger if exists guard_product_review_update_trigger on public.reviews;
 create trigger guard_product_review_update_trigger before update on public.reviews for each row execute function public.guard_product_review_update();
 
