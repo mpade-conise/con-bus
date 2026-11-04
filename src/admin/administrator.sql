@@ -6,9 +6,7 @@ alter table public.profiles add column if not exists deactivated_at timestamptz;
 -- Security-definer predicate avoids recursive profiles RLS when administrators list accounts.
 create or replace function public.is_active_marketplace_admin()
 returns boolean language sql stable security definer set search_path=public as $
- select exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active);
-$;
-revoke all on function public.is_active_marketplace_admin() from public,anon;
+ select exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active);\n$;revoke all on function public.is_active_marketplace_admin() from public,anon;
 grant execute on function public.is_active_marketplace_admin() to authenticated;
 
 create table if not exists public.product_reports(
