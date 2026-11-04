@@ -54,6 +54,22 @@ drop policy if exists "Customers delete own review images" on storage.objects;
 create policy "Customers delete own review images" on storage.objects for delete to authenticated using(bucket_id='product-review-images' and (storage.foldername(name))[1]=auth.uid()::text);
 
 -- Keep product aggregate ratings synchronized with approved reviews only.
+create or replace function public.guard_product_review_update()
+returns trigger language plpgsql security definer set search_path=public as $
+begin
+ if auth.uid()=old.customer_id then
+   if new.product_id is distinct from old.product_id or new.customer_id is distinct from old.customer_id or new.status is distinct from old.status or new.seller_response is distinct from old.seller_response or new.seller_response_at is distinct from old.seller_response_at then raise exception 'Customers may edit only their own rating, comment and review photos.'; end if;
+ elsif exists(select 1 from public.products p where p.id=old.product_id and p.seller_id=auth.uid()) then
+   if new.product_id is distinct from old.product_id or new.customer_id is distinct from old.customer_id or new.rating is distinct from old.rating or new.comment is distinct from old.comment or new.review_images is distinct from old.review_images or new.status is distinct from old.status then raise exception 'Sellers may only write or update their response.'; end if;
+ else
+   raise exception 'Not allowed to edit this review.';
+ end if;
+ return new;
+end;
+$;
+drop trigger if exists guard_product_review_update_trigger on public.reviews;
+create trigger guard_product_review_update_trigger before update on public.reviews for each row execute function public.guard_product_review_update();
+
 create or replace function public.refresh_product_review_rating()
 returns trigger language plpgsql security definer set search_path=public as $$
 declare v_product_id uuid;
@@ -62,7 +78,8 @@ begin
  update public.products p set rating=coalesce((select round(avg(r.rating)::numeric,1) from public.reviews r where r.product_id=v_product_id and r.status='approved'),0),
  rating_count=(select count(*)::integer from public.reviews r where r.product_id=v_product_id and r.status='approved')
  where p.id=v_product_id;
- return coalesce(new,old);
+ if tg_op='DELETE' then return old; end if;
+ return new;
 end;
 $$;
 drop trigger if exists refresh_product_review_rating_trigger on public.reviews;
