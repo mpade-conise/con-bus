@@ -5,7 +5,7 @@ import ProductDetails from"./ProductDetails.jsx";
 import CheckoutStart from"./CheckoutStart.jsx";
 import CustomerOrders from"./CustomerOrders.jsx";
 import CustomerTransactions from"./CustomerTransactions.jsx";
-import PaymentResult from"./PaymentResult.jsx";
+import PaymentResult from"./PaymentResult.jsx";import CustomerAddresses from"../delivery/CustomerAddresses.jsx";
 import ProtectedRoute from"../authentication/ProtectedRoute.jsx";
 
 export const homepageRoutes=[
@@ -17,5 +17,5 @@ export const homepageRoutes=[
  <Route key="checkout" path="/checkout" element={<ProtectedRoute roles={["customer"]}><CheckoutStart/></ProtectedRoute>}/>,
  <Route key="orders" path="/orders" element={<ProtectedRoute roles={["customer"]}><CustomerOrders/></ProtectedRoute>}/>,
  <Route key="transactions" path="/transactions" element={<ProtectedRoute roles={["customer"]}><CustomerTransactions/></ProtectedRoute>}/>,
- <Route key="payment-result" path="/payment-result" element={<ProtectedRoute roles={["customer"]}><PaymentResult/></ProtectedRoute>}/>
+ <Route key="payment-result" path="/payment-result" element={<ProtectedRoute roles={["customer"]}><PaymentResult/></ProtectedRoute>}/>,\n <Route key="customer-addresses" path="/customer/addresses" element={<ProtectedRoute roles={["customer"]}><CustomerAddresses/></ProtectedRoute>}/>
 ];
