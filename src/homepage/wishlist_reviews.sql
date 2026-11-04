@@ -57,9 +57,8 @@ drop policy if exists "Sellers respond to reviews of own products" on public.rev
 create policy "Sellers respond to reviews of own products" on public.reviews for update to authenticated
 using(exists(select 1 from public.products p where p.id=product_id and p.seller_id=auth.uid()))
 with check(exists(select 1 from public.products p where p.id=product_id and p.seller_id=auth.uid()));
-grant select,insert,delete on public.review_reports to authenticated;
-grant update on public.reviews to authenticated;
-grant usage,select on all sequences in schema public to authenticated;
+grant select,insert,update(status),delete on public.review_reports to authenticated;
+grant select,insert,update,delete on public.reviews to authenticated;
 
 -- Review photos are public to view; only the uploader can add/remove files in their own folder.
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
