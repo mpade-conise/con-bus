@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
 
   async function loadProfile(user) {
     if (!user || !isSupabaseConfigured) return null;
-    const {data,error}=await supabase.from("profiles").select("id,role,is_active").eq("id",user.id).maybeSingle();
+    const {data,error}=await supabase.from("profiles").select("id,role,is_active,full_name,avatar_url,phone,bio").eq("id",user.id).maybeSingle();
     if (error) throw error;
     return data;
   }
