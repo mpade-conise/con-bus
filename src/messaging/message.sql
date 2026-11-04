@@ -95,9 +95,9 @@ create policy "Conversation participants hide own conversations" on public.conve
 
 drop policy if exists "Conversation participants read messages" on public.messages;
 create policy "Conversation participants read messages" on public.messages for select to authenticated using(exists(select 1 from public.conversations c where c.id=conversation_id and (c.customer_id=auth.uid() or c.seller_id=auth.uid())));
-create or replace function public.marketplace_messaging_blocked(p_customer uuid,p_seller uuid) returns boolean language sql security definer set search_path=public as $
+create or replace function public.marketplace_messaging_blocked(p_customer uuid,p_seller uuid) returns boolean language sql security definer set search_path=public as $blocked$
  select exists(select 1 from public.user_blocks where (blocker_id=p_customer and blocked_id=p_seller) or (blocker_id=p_seller and blocked_id=p_customer));
-$;
+$blocked$;
 revoke all on function public.marketplace_messaging_blocked(uuid,uuid) from public;
 grant execute on function public.marketplace_messaging_blocked(uuid,uuid) to authenticated;
 
@@ -113,7 +113,7 @@ create policy "Users report messages they receive" on public.message_reports for
 drop policy if exists "Administrators review message reports" on public.message_reports;
 create policy "Administrators review message reports" on public.message_reports for select to authenticated using(exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='administrator' and p.is_active));
 
-create or replace function public.guard_conversation_participant_update() returns trigger language plpgsql set search_path=public as $
+create or replace function public.guard_conversation_participant_update() returns trigger language plpgsql set search_path=public as $guard$
 begin
  if auth.uid()=old.customer_id then
   if new.customer_id is distinct from old.customer_id or new.seller_id is distinct from old.seller_id or new.product_id is distinct from old.product_id or new.seller_deleted_at is distinct from old.seller_deleted_at then raise exception 'You may only delete your own conversation view.'; end if;
@@ -121,7 +121,7 @@ begin
   if new.customer_id is distinct from old.customer_id or new.seller_id is distinct from old.seller_id or new.product_id is distinct from old.product_id or new.customer_deleted_at is distinct from old.customer_deleted_at then raise exception 'You may only delete your own conversation view.'; end if;
  else raise exception 'Not a conversation participant.'; end if;
  return new;
-end; $;
+end; $guard$;
 drop trigger if exists guard_conversation_update on public.conversations;
 create trigger guard_conversation_update before update on public.conversations for each row execute function public.guard_conversation_participant_update();
 
