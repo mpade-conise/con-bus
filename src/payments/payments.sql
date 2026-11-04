@@ -205,7 +205,7 @@ create or replace function public.finalize_marketplace_payment(p_tx_ref text,p_p
 returns void language plpgsql security definer set search_path=public as $$
 declare v_tx public.marketplace_transactions%rowtype;
 begin
-  if coalesce(current_setting('request.jwt.claim.role',true),'')<>'service_role' then raise exception 'Service role required.'; end if;
+  if coalesce(auth.role(),'')<>'service_role' then raise exception 'Service role required.'; end if;
   select * into v_tx from public.marketplace_transactions where tx_ref=p_tx_ref for update;
   if not found then raise exception 'Unknown transaction reference.'; end if;
   if v_tx.status='successful' then return; end if;
