@@ -5,5 +5,6 @@ import App from "./App.jsx";
 import { AuthProvider } from "./authentication/AuthContext.jsx";
 import "./style.css";
 import "./authentication/auth.css";
+import "./homepage/homepage.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(<React.StrictMode><BrowserRouter><AuthProvider><App /></AuthProvider></BrowserRouter></React.StrictMode>);

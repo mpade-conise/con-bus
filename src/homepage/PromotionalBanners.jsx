@@ -1,0 +1,2 @@
+import{ArrowRight,Tag}from"lucide-react";import{Link}from"react-router-dom";
+export default function PromotionalBanners(){return <section className="mh-promo"><div><span className="mh-eyebrow"><Tag size={13}/> MARKET HUB OFFERS</span><h2>Good finds. Great value.</h2><p>Explore special offers and fresh deals from marketplace sellers.</p><Link to="/?sort=discount#products">Explore offers <ArrowRight size={16}/></Link></div><div className="mh-promo-art"><span>DEALS</span><strong>DISCOVER<br/>MORE.</strong><small>Shop local. Shop smart.</small></div></section>}

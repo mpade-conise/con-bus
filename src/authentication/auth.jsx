@@ -1,5 +1,4 @@
 import { Routes, Route } from "react-router-dom";
-import Home from "../Home.jsx";
 import Login from "./Login.jsx";
 import CustomerRegistration from "./CustomerRegistration.jsx";
 import SellerRegistration from "./SellerRegistration.jsx";
@@ -18,7 +17,6 @@ import Dashboard from "./Dashboard.jsx";
 
 export default function AuthRouter() {
   return <Routes>
-    <Route path="/" element={<Home/>}/>
     <Route path="/auth/login" element={<Login/>}/>
     <Route path="/auth/register/customer" element={<CustomerRegistration/>}/>
     <Route path="/auth/register/seller" element={<SellerRegistration/>}/>
@@ -33,6 +31,5 @@ export default function AuthRouter() {
     <Route path="/account/change-password" element={<ProtectedRoute><ChangePassword/></ProtectedRoute>}/>
     <Route path="/account/deactivate" element={<ProtectedRoute><AccountDeactivation/></ProtectedRoute>}/>
     <Route path="/auth/logout" element={<ProtectedRoute><Logout/></ProtectedRoute>}/>
-    <Route path="*" element={<Home/>}/>
   </Routes>;
 }

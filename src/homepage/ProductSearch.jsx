@@ -1,0 +1,2 @@
+import{Search,X}from"lucide-react";
+export default function ProductSearch({value,onChange,onSubmit}){return <form className="mh-product-search" onSubmit={onSubmit}><Search size={18}/><input value={value} onChange={e=>onChange(e.target.value)} placeholder="Search products, brands or sellers…"/>{value&&<button type="button" onClick={()=>onChange("")} aria-label="Clear search"><X size={16}/></button>}<button className="mh-search-submit">Search</button></form>}
