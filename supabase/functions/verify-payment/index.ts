@@ -22,7 +22,7 @@ Deno.serve(async req=>{
     await db.from("payment_reconciliation").insert({transaction_id:tx.id,tx_ref,provider_reference:payment.reference||null,expected_amount:tx.amount,received_amount:Number(payment.amount)||null,currency:payment.currency||null,result:"mismatch",notes:"Customer status check returned mismatched provider values."});
     return json({status:"pending",message:"Payment is under manual reconciliation."},202);
    }
-   const{error}=await db.rpc("finalize_marketplace_payment",{p_tx_ref:tx_ref,p_provider_reference:String(payment.reference||""),p_amount:Number(payment.amount),p_currency:String(payment.currency).toUpperCase(),p_provider_status:payment.status});if(error)throw error;
+   const{error}=await db.rpc("finalize_marketplace_payment",{p_tx_ref:tx_ref,p_provider_reference:String(payment.reference||""),p_amount:Number(payment.amount),p_currency:String(payment.currency).toUpperCase(),p_provider_status:payment.status,p_provider_fee:Number(payment.charges||payment.charge||0)});if(error)throw error;
    return json({status:"successful"});
   }
   if(["failed","cancelled","canceled"].includes(String(payment?.status||"").toLowerCase())){
