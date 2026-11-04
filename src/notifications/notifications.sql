@@ -119,10 +119,12 @@ drop trigger if exists marketplace_product_stock_notifications on public.product
 create trigger marketplace_product_stock_notifications after update of stock on public.products for each row execute function public.notify_product_stock();
 
 create or replace function public.notify_marketplace_promotion() returns trigger language plpgsql security definer set search_path=public as $$
-declare v_customer record;
+declare v_customer record; v_changed boolean:=false;
 begin
- if new.is_active and (new.starts_at is null or new.starts_at<=now()) and (new.ends_at is null or new.ends_at>now())
- and (tg_op='INSERT' or old.is_active is distinct from new.is_active or old.title is distinct from new.title or old.subtitle is distinct from new.subtitle or old.image_url is distinct from new.image_url or old.cta_url is distinct from new.cta_url) then
+ if tg_op='INSERT' then v_changed:=true;
+ else v_changed:=old.is_active is distinct from new.is_active or old.title is distinct from new.title or old.subtitle is distinct from new.subtitle or old.image_url is distinct from new.image_url or old.cta_url is distinct from new.cta_url;
+ end if;
+ if new.is_active and (new.starts_at is null or new.starts_at<=now()) and (new.ends_at is null or new.ends_at>now()) and v_changed then
   for v_customer in select id from public.profiles where role='customer' and is_active loop
    perform public.create_marketplace_notification(v_customer.id,'promotion','New marketplace promotion',new.title||coalesce(': '||new.subtitle,''),new.id,coalesce(new.cta_url,'/'),'low','{}'::jsonb);
   end loop;
