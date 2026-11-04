@@ -55,7 +55,7 @@ declare v_uid uuid:=auth.uid();v_customer uuid;v_seller uuid;v_role text;v_id uu
 begin
  if v_uid is null then raise exception 'Sign in to contact marketplace users.'; end if;
  select role into v_role from public.profiles where id=v_uid and is_active=true;
- if v_role not in('customer','seller') then raise exception 'Only customers and sellers can use marketplace messaging.'; end if;
+ if v_role is null or v_role not in('customer','seller') then raise exception 'An active customer or seller account is required.'; end if;
  if v_role='customer' then v_customer:=v_uid;v_seller:=p_other_user_id;
  else v_seller:=v_uid;v_customer:=p_other_user_id; end if;
  if not exists(select 1 from public.profiles where id=case when v_role='customer' then v_seller else v_customer end and is_active=true and role=case when v_role='customer' then 'seller' else 'customer' end) then raise exception 'The selected marketplace user is unavailable.'; end if;
@@ -131,7 +131,7 @@ create trigger guard_conversation_update before update on public.conversations f
 
 revoke update on public.conversations from authenticated;
 grant select,update(customer_deleted_at,seller_deleted_at) on public.conversations to authenticated;
-revoke update on public.messages from authenticated;
+revoke update on public.messages,public.user_blocks,public.message_reports from authenticated;
 grant select,insert on public.messages to authenticated;
 grant update(read_at) on public.messages to authenticated;
 grant select,insert,delete on public.user_blocks to authenticated;
