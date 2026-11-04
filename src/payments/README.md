@@ -49,7 +49,8 @@ Enable payment events and use the Web Secret from the PayChangu dashboard. The w
 - The return page and webhook both verify the transaction server-side. A browser redirect or client-side status is never treated as proof of payment.
 - Verification requires exact transaction reference, MWK currency and exact expected amount before marking orders paid.
 - Customer payment history is at `/transactions`; payment notifications appear on the same page.
-- Customers can request refunds for paid cancelled or delivered orders. Administrators review the request and reconcile the actual refund.
+- Customers can request refunds for paid cancelled or delivered orders. Administrators review each seller order separately, so one order in a multi-seller checkout can be refunded without incorrectly refunding the other sellers' orders. The actual refund is processed in PayChangu first, then reconciled in the admin dashboard.
+- Stale payment sessions are expired after 30 minutes. A still-pending payment blocks a second attempt; late duplicate successful payments are flagged for a separate refund instead of crediting sellers twice.
 - Seller earnings are calculated per seller order after the configured platform fee. Earnings become withdrawable only when the order is marked delivered.
 - Sellers request withdrawals in Seller Dashboard → Transactions. Administrators review and record payout status at `/admin/payments`.
 - Administrator payment dashboard includes transactions, withdrawal requests, refunds, reconciliation records and configurable marketplace fee/minimum withdrawal.
