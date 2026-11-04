@@ -12,6 +12,22 @@ create table if not exists public.review_reports (
  unique(review_id,reporter_id)
 );
 create index if not exists review_reports_status_idx on public.review_reports(status,created_at desc);
+create table if not exists public.customer_wishlist(
+ customer_id uuid not null references public.profiles(id) on delete cascade,
+ product_id uuid not null references public.products(id) on delete cascade,
+ created_at timestamptz not null default now(),
+ primary key(customer_id,product_id)
+);
+create index if not exists customer_wishlist_product_idx on public.customer_wishlist(product_id);
+alter table public.customer_wishlist enable row level security;
+drop policy if exists "Customers read own wishlist" on public.customer_wishlist;
+create policy "Customers read own wishlist" on public.customer_wishlist for select to authenticated using(customer_id=auth.uid());
+drop policy if exists "Customers add to own wishlist" on public.customer_wishlist;
+create policy "Customers add to own wishlist" on public.customer_wishlist for insert to authenticated with check(customer_id=auth.uid() and exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='customer' and p.is_active));
+drop policy if exists "Customers remove from own wishlist" on public.customer_wishlist;
+create policy "Customers remove from own wishlist" on public.customer_wishlist for delete to authenticated using(customer_id=auth.uid());
+grant select,insert,delete on public.customer_wishlist to authenticated;
+grant select,insert,update,delete on public.reviews to authenticated;
 alter table public.review_reports enable row level security;
 drop policy if exists "Customers report product reviews" on public.review_reports;
 create policy "Customers report product reviews" on public.review_reports for insert to authenticated with check(reporter_id=auth.uid() and exists(select 1 from public.reviews r where r.id=review_id and r.customer_id<>auth.uid()));
