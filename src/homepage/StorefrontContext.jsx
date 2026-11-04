@@ -9,7 +9,7 @@ const addToCart=product=>{if(!product||product.availability_status==="out_of_sto
 const changeQuantity=(id,quantity)=>setCart(old=>quantity<1?old.filter(x=>String(x.id)!==String(id)):old.map(x=>String(x.id)===String(id)?{...x,quantity:Math.min(Number(x.stock??99),Math.max(1,Math.floor(Number(quantity)||1)))}:x));
 const removeFromCart=id=>setCart(old=>old.filter(x=>String(x.id)!==String(id)));
 const saveForLater=id=>{const item=cart.find(x=>String(x.id)===String(id));if(!item)return;setSavedItems(old=>old.some(x=>String(x.id)===String(id))?old:[...old,item]);removeFromCart(id)};
-const moveToCart=id=>{const item=savedItems.find(x=>String(x.id)===String(id));if(!item)return;setCart(old=>old.some(x=>String(x.id)===String(id))?old: [...old,{...item,quantity:Math.min(item.quantity,Number(item.stock??99))}]);setSavedItems(old=>old.filter(x=>String(x.id)!==String(id)))};
+const moveToCart=id=>{const item=savedItems.find(x=>String(x.id)===String(id));if(!item||Number(item.stock??0)<=0)return;setCart(old=>old.some(x=>String(x.id)===String(id))?old: [...old,{...item,quantity:Math.min(item.quantity,Number(item.stock??99))}]);setSavedItems(old=>old.filter(x=>String(x.id)!==String(id)))};
 const removeSaved=id=>setSavedItems(old=>old.filter(x=>String(x.id)!==String(id)));
 const clearCart=()=>setCart([]);
 const cartSubtotal=cart.reduce((n,x)=>n+Number(x.originalPrice??x.price)*Number(x.quantity||0),0);
