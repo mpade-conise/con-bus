@@ -2,6 +2,7 @@
 create extension if not exists pgcrypto;
 
 alter table public.seller_orders
+  add column if not exists discount_amount numeric(12,2) not null default 0 check(discount_amount>=0),
   add column if not exists delivery_method text,
   add column if not exists delivery_address jsonb not null default '{}'::jsonb,
   add column if not exists payment_method text,
@@ -102,6 +103,7 @@ declare
   v_items jsonb;
   v_subtotal numeric(12,2);
   v_total numeric(12,2);
+  v_grand_total numeric(12,2);
   v_order_id uuid;
   v_order_number text;
   v_result jsonb:='[]'::jsonb;
@@ -127,6 +129,7 @@ begin
   loop
     v_items:='[]'::jsonb;
     v_subtotal:=0;
+    v_grand_total:=0;
     for v_item in select i from jsonb_array_elements(p_items) i
       join public.products p on p.id=(i->>'id')::uuid
       where p.seller_id=v_seller
@@ -140,15 +143,16 @@ begin
       if v_product.stock<v_qty then raise exception 'Insufficient stock for %.',coalesce(v_product.name,v_product.title); end if;
       v_name:=coalesce(v_product.name,v_product.title,'Product');
       v_total:=coalesce(v_product.discount_price,v_product.sale_price,v_product.price);
-      v_subtotal:=v_subtotal+(v_total*v_qty);
+      v_subtotal:=v_subtotal+(v_product.price*v_qty);
+      v_grand_total:=v_grand_total+(v_total*v_qty);
       v_items:=v_items||jsonb_build_array(jsonb_build_object('product_id',v_product.id,'name',v_name,'quantity',v_qty,'unit_price',v_total,'regular_price',v_product.price,'image_url',(select p.image_url from public.products p where p.id=v_product.id)));
       update public.products set stock=stock-v_qty where id=v_product.id;
     end loop;
     v_order_number:='MH-'||to_char(now(),'YYMMDD')||'-'||upper(substr(encode(gen_random_bytes(5),'hex'),1,8));
-    insert into public.seller_orders(seller_id,customer_id,customer_name,order_number,items,subtotal,shipping_amount,total_amount,currency,status,payment_status,delivery_method,delivery_address,payment_method,customer_note)
-    values(v_seller,v_uid,(select full_name from public.profiles where id=v_uid),v_order_number,v_items,v_subtotal,0,v_subtotal,'MWK','pending','pending',p_delivery_method,p_delivery_address,p_payment_method,nullif(p_customer_note,''))
+    insert into public.seller_orders(seller_id,customer_id,customer_name,order_number,items,subtotal,shipping_amount,discount_amount,total_amount,currency,status,payment_status,delivery_method,delivery_address,payment_method,customer_note)
+    values(v_seller,v_uid,(select full_name from public.profiles where id=v_uid),v_order_number,v_items,v_subtotal,0,v_subtotal-v_grand_total,v_grand_total,'MWK','pending','pending',p_delivery_method,p_delivery_address,p_payment_method,nullif(p_customer_note,''))
     returning id into v_order_id;
-    v_result:=v_result||jsonb_build_array(jsonb_build_object('id',v_order_id,'order_number',v_order_number,'seller_id',v_seller,'total_amount',v_subtotal));
+    v_result:=v_result||jsonb_build_array(jsonb_build_object('id',v_order_id,'order_number',v_order_number,'seller_id',v_seller,'total_amount',v_grand_total));
   end loop;
   if jsonb_array_length(v_result)=0 then raise exception 'No valid products were found in your cart.'; end if;
   return v_result;
