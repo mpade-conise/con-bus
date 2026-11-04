@@ -54,6 +54,7 @@ create table if not exists public.products (
   sale_price numeric(12,2) check (sale_price is null or sale_price >= 0),
   image_url text,
   images jsonb not null default '[]'::jsonb,
+  visibility text not null default 'public' check (visibility in ('public','private')),
   stock integer not null default 0 check (stock >= 0),
   is_active boolean not null default true,
   status text not null default 'draft' check (status in ('draft','pending','published','inactive','rejected')),
@@ -66,6 +67,8 @@ create table if not exists public.products (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.products add column if not exists visibility text not null default 'public' check (visibility in ('public','private'));
 
 create table if not exists public.reviews (
   id uuid primary key default gen_random_uuid(),
@@ -145,7 +148,7 @@ with check (seller_id = auth.uid() and exists (select 1 from public.profiles p w
 
 -- Products: authenticated users see only published active listings; sellers manage only their own products.
 drop policy if exists "Public can view published storefront products" on public.products;
-create policy "Public can view published storefront products" on public.products for select to authenticated using (is_active = true and status = 'published');
+create policy "Public can view published storefront products" on public.products for select to authenticated using (is_active = true and status = 'published' and visibility = 'public');
 drop policy if exists "Sellers can view own products" on public.products;
 create policy "Sellers can view own products" on public.products for select to authenticated using (seller_id = auth.uid());
 drop policy if exists "Sellers can create own products" on public.products;
