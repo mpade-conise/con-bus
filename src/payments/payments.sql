@@ -3,8 +3,8 @@ create extension if not exists pgcrypto;
 
 create table if not exists public.marketplace_settings(
   id boolean primary key default true check(id),
-  platform_fee_percent numeric(5,2) not null default 5 check(platform_fee_percent>=0 and platform_fee_percent<=30),
-  minimum_withdrawal numeric(12,2) not null default 1000 check(minimum_withdrawal>=0),
+  platform_fee_percent numeric(5,2) not null default 0 check(platform_fee_percent>=0 and platform_fee_percent<=30),
+  minimum_withdrawal numeric(12,2) not null default 0 check(minimum_withdrawal>=0),
   updated_at timestamptz not null default now()
 );
 insert into public.marketplace_settings(id) values(true) on conflict(id) do nothing;
@@ -171,6 +171,7 @@ begin
   if p_method not in('airtel_money','tnm_mpamba','card') then raise exception 'Unsupported payment method.'; end if;
   if coalesce(array_length(p_order_ids,1),0)=0 then raise exception 'Select at least one order to pay.'; end if;
   if (select count(distinct x) from unnest(p_order_ids) x)<>array_length(p_order_ids,1) then raise exception 'Duplicate order selected.'; end if;
+  perform 1 from public.seller_orders where id=any(p_order_ids) and customer_id=v_uid for update;
   if (select count(*) from public.seller_orders where id=any(p_order_ids) and customer_id=v_uid and status not in('cancelled','refunded') and payment_status in('pending','failed'))<>array_length(p_order_ids,1) then raise exception 'One or more orders cannot be paid.'; end if;
   update public.marketplace_transactions t set status='expired',updated_at=now()
   where t.status='pending' and exists(select 1 from public.payment_order_allocations a where a.transaction_id=t.id and a.order_id=any(p_order_ids));
@@ -255,7 +256,7 @@ begin
   if coalesce(p_destination->>'account_name','')='' or coalesce(p_destination->>'account_number','')='' then raise exception 'Enter payout account name and number.'; end if;
   select minimum_withdrawal into v_min from public.marketplace_settings where id=true;
   select coalesce(sum(net_amount),0) into v_available from public.seller_earnings where seller_id=v_uid and status='available';
-  select coalesce(sum(amount),0) into v_reserved from public.seller_withdrawals where seller_id=v_uid and status in('pending','approved','processing');
+  select coalesce(sum(amount),0) into v_reserved from public.seller_withdrawals where seller_id=v_uid and status in('pending','approved','processing','paid');
   if p_amount<v_min then raise exception 'Minimum withdrawal is % MWK.',v_min; end if;
   if p_amount>v_available-v_reserved then raise exception 'Insufficient available earnings.'; end if;
   insert into public.seller_withdrawals(seller_id,reference,amount,payout_method,destination)
@@ -351,3 +352,29 @@ begin
     if not exists(select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='seller_withdrawals') then execute 'alter publication supabase_realtime add table public.seller_withdrawals'; end if;
   end if;
 end $$;
+
+-- Allow administrators to reconcile a refund only after confirming the provider-side refund.
+drop policy if exists "Administrators update payment transactions" on public.marketplace_transactions;
+create policy "Administrators update payment transactions" on public.marketplace_transactions for update to authenticated
+using(exists(select 1 from public.profiles where id=auth.uid() and role='administrator'))
+with check(exists(select 1 from public.profiles where id=auth.uid() and role='administrator'));
+grant update(status,provider_reference,provider_status,failure_reason,updated_at,completed_at) on public.marketplace_transactions to authenticated;
+grant select,update on public.marketplace_settings to authenticated;
+
+create or replace function public.reverse_seller_earnings_on_refund()
+returns trigger language plpgsql security definer set search_path=public as $$
+begin
+ if new.status='refunded' and old.status is distinct from new.status then
+   update public.seller_orders o set payment_status='refunded'
+   from public.payment_order_allocations a where a.transaction_id=new.id and a.order_id=o.id;
+   update public.seller_earnings set status='reversed',updated_at=now()
+   where transaction_id=new.id and status<>'withdrawn';
+   update public.marketplace_refund_requests set status='refunded',updated_at=now()
+   where transaction_id=new.id and status in('approved','processing');
+ end if;
+ return new;
+end;
+$$;
+drop trigger if exists reverse_seller_earnings_refund_trigger on public.marketplace_transactions;
+create trigger reverse_seller_earnings_refund_trigger after update of status on public.marketplace_transactions
+for each row execute function public.reverse_seller_earnings_on_refund();
