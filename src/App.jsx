@@ -5,8 +5,9 @@ import{homepageRoutes}from"./homepage/homepage.jsx";
 import{sellerRoutes}from"./sellers/sellers.jsx";
 import{adminRoutes}from"./admin/admin.jsx";
 import Messaging from"./messaging/Messaging.jsx";
+import Notifications from"./notifications/Notifications.jsx";
 import ProtectedRoute from"./authentication/ProtectedRoute.jsx";
 
 export default function App(){
- return <StorefrontProvider><Routes>{[...authRoutes,...homepageRoutes,...sellerRoutes,...adminRoutes,<Route key="messages" path="/messages" element={<ProtectedRoute roles={["customer","seller"]}><Messaging/></ProtectedRoute>}/>,<Route key="not-found" path="*" element={<Navigate to="/auth/login" replace/>}/>]}</Routes></StorefrontProvider>;
+ return <StorefrontProvider><Routes>{[...authRoutes,...homepageRoutes,...sellerRoutes,...adminRoutes,<Route key="messages" path="/messages" element={<ProtectedRoute roles={["customer","seller"]}><Messaging/></ProtectedRoute>}/>,<Route key="notifications" path="/notifications" element={<ProtectedRoute roles={["customer","seller","administrator"]}><Notifications/></ProtectedRoute>}/>,<Route key="not-found" path="*" element={<Navigate to="/auth/login" replace/>}/>]}</Routes></StorefrontProvider>;
 }
