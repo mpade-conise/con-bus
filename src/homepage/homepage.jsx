@@ -6,9 +6,11 @@ import CheckoutStart from"./CheckoutStart.jsx";
 import CustomerOrders from"./CustomerOrders.jsx";
 import CustomerTransactions from"./CustomerTransactions.jsx";
 import PaymentResult from"./PaymentResult.jsx";
+import CustomerDashboard from"./CustomerDashboard.jsx";
 import ProtectedRoute from"../authentication/ProtectedRoute.jsx";
 
 export const homepageRoutes=[
+ <Route key="customer-dashboard" path="/account" element={<ProtectedRoute roles={["customer"]}><CustomerDashboard/></ProtectedRoute>}/>,
  <Route key="home" path="/" element={<ProtectedRoute roles={["customer"]}><Homepage/></ProtectedRoute>}/>,
  <Route key="customer-dashboard" path="/customer/dashboard" element={<ProtectedRoute roles={["customer"]}><CustomerDashboard/></ProtectedRoute>}/>,
  <Route key="product" path="/product/:id" element={<ProtectedRoute roles={["customer"]}><ProductDetails/></ProtectedRoute>}/>,
