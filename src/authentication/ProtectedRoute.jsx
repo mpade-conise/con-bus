@@ -9,6 +9,8 @@ export default function ProtectedRoute({children,roles}) {
   if(!user)return <Navigate to="/auth/login" replace state={{from:location.pathname+location.search+location.hash}}/>;
   if(!profile)return <div className="auth-loading">Your account could not be verified. Please sign out and sign in again.</div>;
   if(profile.is_active===false)return <Navigate to="/account/deactivated" replace/>;
-  if(roles&&!roles.includes(role))return <Navigate to="/dashboard" replace/>;
+  const portal=role==="seller"?"/seller":role==="customer"?"/":"/dashboard";
+  if(location.pathname==="/dashboard"&&portal!=="/dashboard")return <Navigate to={portal} replace/>;
+  if(roles&&!roles.includes(role))return <Navigate to={portal} replace/>;
   return children;
 }
