@@ -4,6 +4,8 @@ Run `orders.sql` in the Supabase SQL Editor **after**:
 1. `src/authentication/authentication.sql`
 2. `src/homepage/homepage.sql`
 3. `src/sellers/sellers.sql`
+4. `src/orders/orders.sql`
+5. `src/payments/payments.sql`
 
 ## Connected flow
 - Customer adds public products to the cart and submits delivery and payment preferences at `/checkout`.
