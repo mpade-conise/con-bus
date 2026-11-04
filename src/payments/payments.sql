@@ -378,3 +378,8 @@ $$;
 drop trigger if exists reverse_seller_earnings_refund_trigger on public.marketplace_transactions;
 create trigger reverse_seller_earnings_refund_trigger after update of status on public.marketplace_transactions
 for each row execute function public.reverse_seller_earnings_on_refund();
+
+-- Explicit client grants for notification acknowledgements and administrator review actions.
+grant update(read_at) on public.marketplace_notifications to authenticated;
+grant update(status,processed_at,admin_note) on public.seller_withdrawals to authenticated;
+grant update(status,admin_note,updated_at) on public.marketplace_refund_requests to authenticated;
