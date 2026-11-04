@@ -277,7 +277,7 @@ begin
   select * into v_order from public.seller_orders where id=p_order_id and customer_id=auth.uid() for update;
   if not found or v_order.payment_status<>'paid' or v_order.status not in('cancelled','delivered') then raise exception 'Only paid cancelled or delivered orders can be submitted for refund review.'; end if;
   if coalesce(trim(p_reason),'')='' then raise exception 'Provide a refund reason.'; end if;
-  select a.transaction_id into v_tx_id from public.payment_order_allocations a join public.marketplace_transactions t on t.id=a.transaction_id where a.order_id=p_order_id and t.status='successful' limit 1;
+  select a.transaction_id into v_tx_id from public.payment_order_allocations a join public.marketplace_transactions t on t.id=a.transaction_id where a.order_id=p_order_id and t.status in('successful','partially_refunded') limit 1;
   if v_tx_id is null then raise exception 'No successful online payment was found for this order.'; end if;
   insert into public.marketplace_refund_requests(order_id,transaction_id,customer_id,seller_id,amount,reason)
   values(v_order.id,v_tx_id,auth.uid(),v_order.seller_id,v_order.total_amount,trim(p_reason)) returning id into v_id;
