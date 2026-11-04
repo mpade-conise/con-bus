@@ -16,7 +16,7 @@ The seller schema creates seller-owned categories, orders, customer messages and
 
 - Business overview and key metrics
 - Store profile, logo, cover image, contact details and location
-- Product create, edit, delete, publish/unpublish, price, discount and inventory management
+- Full product catalogue: multiple images, SKU, condition, specifications, variations, tags, price/discount, stock, availability, visibility, featured placement, preview, publish/unpublish, edit and delete
 - Seller-specific product categories
 - Customer order list and fulfilment status updates
 - Customer message inbox and read status
@@ -30,3 +30,10 @@ Only a logged-in user whose `profiles.role = 'seller'` and `profiles.is_active =
 ## Integration boundary
 
 The dashboard reads seller orders, customer messages and payment transactions from `seller_orders`, `seller_messages` and `seller_transactions`. These records are populated by the checkout, customer messaging and payment workflows. Those workflows are separate integrations; this dashboard does not fabricate orders, messages, payouts or payment records. Transaction rows are read-only to sellers. Seller order updates are limited to fulfilment status and seller note.
+
+
+## Product catalogue
+
+The seller product form supports up to eight JPG, PNG or WebP images per listing (5 MB each), a main gallery image, seller-unique SKU, new/used/refurbished condition, specifications and selectable variation definitions, tags, inventory quantity, availability, public/private visibility, featured selection and a pre-publication preview. Only products with `status = 'published'`, `is_active = true` and `visibility = 'public'` are available to customer storefront queries. Private and draft listings remain available to their owner in the seller portal.
+
+After deploying these changes, run the updated `src/homepage/homepage.sql` and then the updated `src/sellers/sellers.sql` in Supabase SQL Editor so the new catalogue columns, indexes, RLS policy and seller column grants are installed.
