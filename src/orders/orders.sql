@@ -112,6 +112,7 @@ begin
     raise exception 'A verified customer account is required.';
   end if;
   if jsonb_typeof(p_items)<>'array' or jsonb_array_length(p_items)=0 then raise exception 'Your cart is empty.'; end if;
+  if (select count(*) from jsonb_array_elements(p_items))<>(select count(*) from jsonb_array_elements(p_items) i join public.products p on p.id=(i->>'id')::uuid) then raise exception 'One or more products in your cart no longer exist.'; end if;
   if coalesce(p_delivery_address->>'name','')='' or coalesce(p_delivery_address->>'phone','')='' or coalesce(p_delivery_address->>'city','')='' or coalesce(p_delivery_address->>'address','')='' then
     raise exception 'Enter the recipient name, phone, city and delivery address.';
   end if;
