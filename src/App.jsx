@@ -1,9 +1,10 @@
-import{Navigate,Route,Routes}from"react-router-dom";
-import AuthRouter from"./authentication/auth.jsx";
-import HomepageRouter from"./homepage/homepage.jsx";
-import SellersRouter from"./sellers/sellers.jsx";
-import AdminRouter from"./admin/admin.jsx";
+import{Navigate,Routes,Route}from"react-router-dom";
+import{StorefrontProvider}from"./homepage/StorefrontContext.jsx";
+import{authRoutes}from"./authentication/auth.jsx";
+import{homepageRoutes}from"./homepage/homepage.jsx";
+import{sellerRoutes}from"./sellers/sellers.jsx";
+import{adminRoutes}from"./admin/admin.jsx";
 
 export default function App(){
-  return <><HomepageRouter/><AuthRouter/><SellersRouter/><AdminRouter/><Routes><Route path="*" element={<Navigate to="/auth/login" replace/>}/></Routes></>;
+ return <StorefrontProvider><Routes>{[...authRoutes,...homepageRoutes,...sellerRoutes,...adminRoutes,<Route key="not-found" path="*" element={<Navigate to="/auth/login" replace/>}/>]}</Routes></StorefrontProvider>;
 }
