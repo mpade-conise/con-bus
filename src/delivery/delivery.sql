@@ -63,6 +63,7 @@ begin
    v_fee:=v_zone.delivery_fee;v_eta:=now()+make_interval(days=>ceil((v_zone.min_days+v_zone.max_days)::numeric/2)::integer);
   else
    if not v_settings.pickup_enabled then raise exception 'This seller does not currently offer pickup.';end if;
+   if coalesce(trim(v_settings.pickup_location),'')='' then raise exception 'This seller has not configured a pickup location yet.';end if;
    v_location:=v_settings.pickup_location;v_eta:=now()+make_interval(days=>ceil((v_settings.default_min_days+v_settings.default_max_days)::numeric/2)::integer);
   end if;
   update public.seller_orders set shipping_amount=v_fee,total_amount=total_amount+v_fee,delivery_zone_id=v_zone_id,delivery_status=case when p_delivery_method='pickup' then 'ready_for_pickup' else 'pending' end,estimated_delivery_at=v_eta,pickup_location=v_location,delivery_instructions=nullif(p_delivery_address->>'instructions','') where id=(v_order->>'id')::uuid;
