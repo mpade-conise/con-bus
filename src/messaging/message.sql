@@ -95,6 +95,12 @@ create policy "Conversation participants hide own conversations" on public.conve
 
 drop policy if exists "Conversation participants read messages" on public.messages;
 create policy "Conversation participants read messages" on public.messages for select to authenticated using(exists(select 1 from public.conversations c where c.id=conversation_id and (c.customer_id=auth.uid() or c.seller_id=auth.uid())));
+create or replace function public.marketplace_messaging_blocked(p_customer uuid,p_seller uuid) returns boolean language sql security definer set search_path=public as $
+ select exists(select 1 from public.user_blocks where (blocker_id=p_customer and blocked_id=p_seller) or (blocker_id=p_seller and blocked_id=p_customer));
+$;
+revoke all on function public.marketplace_messaging_blocked(uuid,uuid) from public;
+grant execute on function public.marketplace_messaging_blocked(uuid,uuid) to authenticated;
+
 drop policy if exists "Participants send messages when not blocked" on public.messages;
 create policy "Participants send messages when not blocked" on public.messages for insert to authenticated with check(sender_id=auth.uid() and exists(select 1 from public.conversations c where c.id=conversation_id and (c.customer_id=auth.uid() or c.seller_id=auth.uid()) and not exists(select 1 from public.user_blocks b where (b.blocker_id=c.customer_id and b.blocked_id=c.seller_id) or (b.blocker_id=c.seller_id and b.blocked_id=c.customer_id))));
 drop policy if exists "Recipients mark messages read" on public.messages;
