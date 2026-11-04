@@ -205,6 +205,8 @@ begin
   if not found then raise exception 'Unknown transaction reference.'; end if;
   if v_tx.status='successful' then return; end if;
   if v_tx.status not in('pending','expired') then raise exception 'Transaction is not eligible for payment finalization.'; end if;
+  if p_provider_status<>'success' or p_currency<>'MWK' or p_amount<>v_tx.amount then raise exception 'Provider payment details do not match the expected transaction.'; end if;
+  if coalesce(p_provider_fee,0)<0 then raise exception 'Invalid provider fee.'; end if;
   if exists(select 1 from public.payment_order_allocations mine join public.payment_order_allocations other on other.order_id=mine.order_id join public.marketplace_transactions paid on paid.id=other.transaction_id where mine.transaction_id=v_tx.id and other.transaction_id<>v_tx.id and paid.status='successful') then
     update public.marketplace_transactions set status='refund_pending',provider_reference=p_provider_reference,provider_status='duplicate_payment_requires_refund',provider_fee=coalesce(p_provider_fee,0),updated_at=now() where id=v_tx.id;
     insert into public.payment_reconciliation(transaction_id,tx_ref,provider_reference,expected_amount,received_amount,currency,result,notes)
@@ -213,8 +215,6 @@ begin
     values(v_tx.customer_id,'duplicate_payment','Duplicate payment under review','A second payment was detected for the same order. The extra payment is flagged for refund review.',v_tx.id);
     return;
   end if;
-  if p_provider_status<>'success' or p_currency<>'MWK' or p_amount<>v_tx.amount then raise exception 'Provider payment details do not match the expected transaction.'; end if;
-  if coalesce(p_provider_fee,0)<0 then raise exception 'Invalid provider fee.'; end if;
   update public.marketplace_transactions set status='successful',provider_reference=p_provider_reference,provider_status=p_provider_status,provider_fee=coalesce(p_provider_fee,0),completed_at=now(),updated_at=now() where id=v_tx.id;
   update public.marketplace_transactions other set status='expired',updated_at=now()
   where other.id<>v_tx.id and other.status='pending' and exists(select 1 from public.payment_order_allocations mine join public.payment_order_allocations theirs on theirs.order_id=mine.order_id where mine.transaction_id=v_tx.id and theirs.transaction_id=other.id);
