@@ -114,8 +114,8 @@ begin
  select * into v_order from public.seller_orders where id=p_order_id and customer_id=auth.uid() for update;
  if not found then raise exception 'Order not found.';end if;
  if v_order.delivery_method='pickup' then
-  if v_order.status<>'ready_for_delivery' or v_order.delivery_status<>'ready_for_pickup' then raise exception 'This pickup order is not ready for collection confirmation.';end if;
-  update public.seller_orders set status='shipped' where id=p_order_id;
+  if v_order.status not in('ready_for_delivery','shipped') or v_order.delivery_status<>'ready_for_pickup' then raise exception 'This pickup order is not ready for collection confirmation.';end if;
+  if v_order.status='ready_for_delivery' then update public.seller_orders set status='shipped' where id=p_order_id;end if;
   update public.seller_orders set status='delivered',delivery_status='collected',delivered_at=now() where id=p_order_id;
   insert into public.seller_order_events(order_id,actor_id,event_type,note) values(p_order_id,auth.uid(),'customer_pickup_confirmed','Customer confirmed collection of the order.');
  else
