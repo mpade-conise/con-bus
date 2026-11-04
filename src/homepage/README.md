@@ -33,5 +33,11 @@ Required product fields include `seller_id`, `name`, and `price`. Use `category_
 - Only administrator profiles can manage categories, promotional banners, and moderate reviews.
 - Do not expose the entire `profiles` table publicly because it contains private phone numbers.
 
-## Cart and checkout
-The current cart is stored in the visitor's browser. Checkout routes to sign-in; order creation, stock reservation and payment processing belong to the separate Orders and Payments modules.
+
+## Shopping cart
+- Customer cart items and saved-for-later items persist in browser local storage.
+- Customers can add/remove products, adjust quantities within available stock, save items for later, restore saved items and continue shopping.
+- The cart calculates regular-price subtotal, discount savings and discounted product total in MWK.
+- Delivery is shown as pending until a delivery location and configured delivery rates are available; no unsupported fee is added to the total.
+- The cart proceeds to the protected `/checkout` review handoff. Actual address capture, order creation, stock reservation and payment processing are separate checkout/orders integrations and are not implemented by the cart module.
+
