@@ -435,3 +435,24 @@ end;
 $$;
 revoke all on function public.admin_confirm_duplicate_payment_refund(text) from public;
 grant execute on function public.admin_confirm_duplicate_payment_refund(text) to authenticated;
+
+-- Prevent sellers from accepting an unpaid online order.
+create or replace function public.enforce_seller_order_transition()
+returns trigger language plpgsql set search_path=public as $$
+begin
+ if new.status is distinct from old.status then
+   if old.status='pending' and new.status='confirmed' and old.payment_method in('airtel_money','tnm_mpamba','card') and old.payment_status<>'paid' then
+     raise exception 'Online payment must be verified before this order can be accepted.';
+   end if;
+   if not (
+     (old.status='pending' and new.status in('confirmed','cancelled')) or
+     (old.status='confirmed' and new.status in('processing','cancelled')) or
+     (old.status='processing' and new.status in('ready_for_delivery','cancelled')) or
+     (old.status='ready_for_delivery' and new.status in('shipped','cancelled')) or
+     (old.status='shipped' and new.status='delivered') or
+     (old.status='delivered' and new.status='refunded')
+   ) then raise exception 'This order status transition is not allowed.'; end if;
+ end if;
+ return new;
+end;
+$$;
