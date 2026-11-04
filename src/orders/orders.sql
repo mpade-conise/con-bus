@@ -142,7 +142,7 @@ begin
       end if;
       if v_product.stock<v_qty then raise exception 'Insufficient stock for %.',coalesce(v_product.name,v_product.title); end if;
       v_name:=coalesce(v_product.name,v_product.title,'Product');
-      v_total:=coalesce(v_product.discount_price,v_product.sale_price,v_product.price);
+      v_total:=least(v_product.price,coalesce(v_product.discount_price,v_product.sale_price,v_product.price));
       v_subtotal:=v_subtotal+(v_product.price*v_qty);
       v_grand_total:=v_grand_total+(v_total*v_qty);
       v_items:=v_items||jsonb_build_array(jsonb_build_object('product_id',v_product.id,'name',v_name,'quantity',v_qty,'unit_price',v_total,'regular_price',v_product.price,'image_url',(select p.image_url from public.products p where p.id=v_product.id)));
