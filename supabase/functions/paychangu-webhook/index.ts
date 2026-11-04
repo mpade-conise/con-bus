@@ -28,7 +28,7 @@ Deno.serve(async req=>{
    await db.from("payment_reconciliation").insert({transaction_id:tx.id,tx_ref:txRef,provider_reference:payment.reference||null,expected_amount:tx.amount,received_amount:Number(payment.amount)||null,currency:payment.currency||null,result:"mismatch",notes:"Verified provider details did not match the local transaction."});
    return new Response("Payment details mismatch; flagged for reconciliation",{status:202});
   }
-  const{error:finalizeError}=await db.rpc("finalize_marketplace_payment",{p_tx_ref:txRef,p_provider_reference:String(payment.reference||""),p_amount:Number(payment.amount),p_currency:String(payment.currency).toUpperCase(),p_provider_status:payment.status});
+  const{error:finalizeError}=await db.rpc("finalize_marketplace_payment",{p_tx_ref:txRef,p_provider_reference:String(payment.reference||""),p_amount:Number(payment.amount),p_currency:String(payment.currency).toUpperCase(),p_provider_status:payment.status,p_provider_fee:Number(payment.charges||payment.charge||0)});
   if(finalizeError)throw finalizeError;
   return new Response("Payment verified",{status:200});
  }catch(error){return new Response(error?.message||"Webhook processing failed",{status:500})}
