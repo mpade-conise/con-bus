@@ -17,7 +17,9 @@ export default function SellerDashboard(){
  db.from("seller_categories").select("*").eq("seller_id",sellerId).order("name"),
  db.from("seller_orders").select("*").eq("seller_id",sellerId).order("created_at",{ascending:false}),
  db.from("seller_messages").select("*").eq("seller_id",sellerId).order("created_at",{ascending:false}),
- db.from("seller_transactions").select("*").eq("seller_id",sellerId).order("created_at",{ascending:false})
+ db.from("seller_transactions").select("*").eq("seller_id",sellerId).order("created_at",{ascending:false}),
+ db.from("seller_earnings").select("*").eq("seller_id",sellerId).order("created_at",{ascending:false}),
+ db.from("seller_withdrawals").select("*").eq("seller_id",sellerId).order("requested_at",{ascending:false})
  ]);for(const r of results)if(r.error)throw r.error;
  setStore({...emptyStore,...(results[0].data||{})});setProducts(results[1].data||[]);setCategories(results[2].data||[]);setOrders(results[3].data||[]);setMessages(results[4].data||[]);setTransactions(results[5].data||[]);setEarnings(results[6].data||[]);setWithdrawals(results[7].data||[]);
  const buyerMap=new Map();for(const o of results[3].data||[]){if(o.customer_id&&!buyerMap.has(o.customer_id))buyerMap.set(o.customer_id,{id:o.customer_id,full_name:o.customer_name||"Customer"});}setCustomers([...buyerMap.values()]);
