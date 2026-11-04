@@ -13,6 +13,7 @@ import ChangePassword from "./ChangePassword.jsx";
 import AccountDeactivation from "./AccountDeactivation.jsx";
 import Logout from "./Logout.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
+import Dashboard from "./Dashboard.jsx";
 
 export default function AuthRouter() {
   return <Routes>
@@ -24,6 +25,7 @@ export default function AuthRouter() {
     <Route path="/auth/verify-phone" element={<ProtectedRoute><PhoneVerification/></ProtectedRoute>}/>
     <Route path="/auth/forgot-password" element={<ForgotPassword/>}/>
     <Route path="/auth/reset-password" element={<ResetPassword/>}/>
+    <Route path="/dashboard" element={<ProtectedRoute><Dashboard/></ProtectedRoute>}/>
     <Route path="/account/profile" element={<ProtectedRoute><ProfileManagement/></ProtectedRoute>}/>
     <Route path="/account/profile-picture" element={<ProtectedRoute><ProfilePictureUpload/></ProtectedRoute>}/>
     <Route path="/account/change-password" element={<ProtectedRoute><ChangePassword/></ProtectedRoute>}/>

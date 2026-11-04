@@ -1,4 +1,5 @@
 import { ArrowRight, Search, ShoppingBag, Store } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Home() {
   return (
@@ -16,7 +17,7 @@ export default function Home() {
         <div className="header-actions">
           <button className="icon-button" aria-label="Search"><Search size={19} /></button>
           <button className="cart-button"><ShoppingBag size={17} /> Cart</button>
-          <button className="sign-in">Sign in</button>
+          <Link className="sign-in" to="/auth/login">Sign in</Link>
         </div>
       </header>
 
@@ -58,7 +59,7 @@ export default function Home() {
 
       <section className="seller-banner" id="sell">
         <div><span className="eyebrow">GROW YOUR BUSINESS</span><h2>Have something to sell?</h2><p>Create your seller space and reach customers through Market Hub.</p></div>
-        <button>Start selling <ArrowRight size={17} /></button>
+        <Link className="seller-cta" to="/auth/register/seller">Start selling <ArrowRight size={17} /></Link>
       </section>
 
       <footer><a className="brand" href="/"><span className="brand-mark"><Store size={17} /></span><span>market<span className="brand-accent">hub</span></span></a><span>© {new Date().getFullYear()} Market Hub</span></footer>
