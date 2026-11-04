@@ -181,3 +181,16 @@ end;
 $$;
 revoke all on function public.request_marketplace_return(uuid,text) from public;
 grant execute on function public.request_marketplace_return(uuid,text) to authenticated;
+
+-- Enable realtime for incoming seller orders and customer tracking timelines when Supabase Realtime is available.
+do $$
+begin
+  if exists(select 1 from pg_publication where pubname='supabase_realtime') then
+    if not exists(select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='seller_orders') then
+      execute 'alter publication supabase_realtime add table public.seller_orders';
+    end if;
+    if not exists(select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='seller_order_events') then
+      execute 'alter publication supabase_realtime add table public.seller_order_events';
+    end if;
+  end if;
+end $$;
