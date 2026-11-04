@@ -19,8 +19,8 @@ Deno.serve(async req=>{
   const payload={amount:String(intent.amount),currency:"MWK",email:intent.email||user.email||"",first_name:intent.first_name||"Customer",last_name:intent.last_name||"",callback_url:callbackUrl,return_url:appUrl.replace(/\/$/,"")+"/payment-result?tx_ref="+encodeURIComponent(intent.tx_ref),tx_ref:intent.tx_ref,customization:{title:"Marketplace order payment",description:"Payment for marketplace order(s)"},meta:{customer_id:user.id,transaction_id:intent.transaction_id,preferred_method:method,order_ids:orderIds}};
   const response=await fetch("https://api.paychangu.com/payment",{method:"POST",headers:{"Accept":"application/json","Content-Type":"application/json","Authorization":"Bearer "+secret},body:JSON.stringify(payload)});
   const result=await response.json().catch(()=>({}));
-  const checkoutUrl=result?.data?.checkout_url;
-  if(!response.ok||result?.status!=="success"||!checkoutUrl||!/^https:\/\/(checkout|test-checkout)\.paychangu\.com\//.test(checkoutUrl)){
+  const checkoutUrl=result?.data?.checkout_url;const providerIntent=result?.data?.data;
+  if(!response.ok||result?.status!=="success"||providerIntent?.tx_ref!==intent.tx_ref||Number(providerIntent?.amount)!==Number(intent.amount)||String(providerIntent?.currency).toUpperCase()!=="MWK"||!checkoutUrl||!/^https:\/\/(checkout|test-checkout)\.paychangu\.com\//.test(checkoutUrl)){
    await serviceClient.rpc("fail_marketplace_payment",{p_tx_ref:intent.tx_ref,p_reason:result?.message||"PayChangu could not create checkout."});
    return json({error:result?.message||"Payment checkout could not be created.",tx_ref:intent.tx_ref},502);
   }
