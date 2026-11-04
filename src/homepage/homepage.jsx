@@ -1,5 +1,6 @@
 import{Route}from"react-router-dom";
 import Homepage from"./Homepage.jsx";
+import CustomerDashboard from"./CustomerDashboard.jsx";
 import ProductDetails from"./ProductDetails.jsx";
 import CheckoutStart from"./CheckoutStart.jsx";
 import CustomerOrders from"./CustomerOrders.jsx";
