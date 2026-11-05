@@ -45,3 +45,29 @@
 .mh-category-sidebar .mh-category svg{width:13px;flex:none}
 @media(max-width:900px){.mh-store-layout{grid-template-columns:minmax(0,1fr) 205px;gap:17px}.mh-store-sidebar{top:10px}}
 @media(max-width:680px){.mh-store-layout{grid-template-columns:minmax(0,1fr);gap:0}.mh-store-main{order:1}.mh-store-sidebar{position:static;order:0;padding-top:18px}.mh-category-sidebar{padding:14px}.mh-category-sidebar .mh-categories{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.mh-category-sidebar .mh-category{min-width:0}.mh-store-main>.mh-section:first-child{padding-top:24px}}
+
+
+/* Fixed storefront navigation and compact product cards with quick-view access */
+.mh-header{position:sticky;top:0;z-index:70;background:#fff;box-shadow:0 5px 18px #1c34400a}
+.mh-product-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.mh-product-card{display:flex;flex-direction:row;align-items:stretch;min-height:94px}
+.mh-product-image{width:80px;height:70px;flex:0 0 80px;aspect-ratio:auto;align-self:center;margin:0 0 0 8px;border-radius:7px;overflow:hidden}
+.mh-image-wrap,.mh-image-wrap img{width:80px;height:70px}
+.mh-image-wrap img{object-fit:contain;padding:3px;mix-blend-mode:normal}
+.mh-no-image{width:80px;height:70px}
+.mh-no-image svg{width:20px;height:20px}
+.mh-product-info{min-width:0;min-height:0;flex:1;padding:9px 8px;display:flex;flex-direction:column;justify-content:center}
+.mh-product-category{font-size:7px;letter-spacing:.5px}
+.mh-product-name{font-size:10px;line-height:1.3;min-height:0;margin:4px 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;white-space:normal;overflow:hidden}
+.mh-product-seller{font-size:8px}
+.mh-product-bottom{margin-top:6px;padding-top:0}
+.mh-product-bottom strong{font-size:10px}
+.mh-product-bottom button{width:27px;height:27px}
+.mh-product-bottom button svg{width:14px;height:14px}
+.mh-quick{width:25px;height:25px;right:4px;top:4px}
+.mh-quick svg{width:13px;height:13px}
+.mh-rating{font-size:8px;margin-top:3px;min-height:0}
+.mh-product-shelf .mh-product-grid{margin-top:4px}
+@media(max-width:1050px){.mh-product-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
+@media(max-width:680px){.mh-product-grid{grid-template-columns:minmax(0,1fr);gap:9px}.mh-product-card{min-height:88px}.mh-header{top:0}.mh-nav{top:68px}}
+@media(max-width:420px){.mh-product-image,.mh-image-wrap,.mh-image-wrap img,.mh-no-image{width:80px;height:70px;flex-basis:80px}.mh-product-info{padding:7px}.mh-product-name{font-size:10px}.mh-product-bottom strong{font-size:10px}}
