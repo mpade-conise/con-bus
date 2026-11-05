@@ -61,7 +61,7 @@ export default function Homepage(){
   <HeroBanner search={search} setSearch={S} onSearch={searchSubmit}/>
   <PromotionalBanners/>
   <CategoryBrowser products={products} onSelect={selectCategory}/>
-  {shelves.map(([eyebrow,title,items])=>items.length>0&&<section className="mh-section mh-product-shelf" key={title}><div className="mh-section-heading"><div><span className="mh-eyebrow">{eyebrow}</span><h2>{title}</h2></div><a href="#products">Shop all <ArrowRight size={15}/></a></div><ProductGrid products={items} {...gridProps}/></section>)}
+  {shelves.map(([eyebrow,title,items])=>items.length>0&&<section id={title==="Featured products"?"featured":title==="Latest products"?"latest":undefined} className="mh-section mh-product-shelf" key={title}><div className="mh-section-heading"><div><span className="mh-eyebrow">{eyebrow}</span><h2>{title}</h2></div><a href="#products">Shop all <ArrowRight size={15}/></a></div><ProductGrid products={items} {...gridProps}/></section>)}
   <section className="mh-section" id="products">
    <div className="mh-section-heading"><div><span className="mh-eyebrow">THE MARKETPLACE</span><h2>{sellerFilter?"Products from selected business":category||"Explore all products"}</h2></div><span className="mh-results-count">{filtered.length} products{storeResults.length?" · "+storeResults.length+" businesses":""}</span></div>
    <ProductSearch value={search} onChange={S} onSubmit={searchSubmit} type={searchType} onTypeChange={SearchType} recent={recent} suggestions={suggestions} onPick={v=>S(v)}/>
