@@ -22,7 +22,7 @@ Deno.serve(async req=>{
    const response=await fetch("https://api.paychangu.com/mobile-money/payments/initialize",{method:"POST",headers:{"Accept":"application/json","Content-Type":"application/json","Authorization":"Bearer "+secret},body:JSON.stringify(payload)});
    const result=await response.json().catch(()=>({})),payment=result?.data;
    if(!response.ok||result?.status!=="success"||!payment?.charge_id||String(payment.charge_id)!==chargeId){
-    await serviceClient.rpc("fail_marketplace_payment",{p_tx_ref:intent.tx_ref,p_reason:result?.message||"PayChangu could not initialize mobile-money payment."});
+    const{error:failError}=await serviceClient.rpc("fail_marketplace_payment",{p_tx_ref:intent.tx_ref,p_reason:result?.message||"PayChangu could not initialize mobile-money payment."});if(failError)console.error("FAIL_MARKETPLACE_PAYMENT_RPC_ERROR",JSON.stringify({message:failError.message,details:failError.details,hint:failError.hint,code:failError.code}),"PAYCHANGU_RESPONSE",JSON.stringify({http_status:response.status,status:result?.status,message:result?.message}));
     return json({error:result?.message||"Mobile-money payment could not be started."},502);
    }
    const{error:updateError}=await serviceClient.from("marketplace_transactions").update({provider_charge_id:String(payment.charge_id),provider_reference:payment.ref_id||null,provider_status:payment.status||"pending",updated_at:new Date().toISOString()}).eq("id",intent.transaction_id);
@@ -34,7 +34,7 @@ Deno.serve(async req=>{
   const response=await fetch("https://api.paychangu.com/payment",{method:"POST",headers:{"Accept":"application/json","Content-Type":"application/json","Authorization":"Bearer "+secret},body:JSON.stringify(payload)});
   const result=await response.json().catch(()=>({})),checkoutUrl=result?.data?.checkout_url,providerIntent=result?.data?.data;
   if(!response.ok||result?.status!=="success"||providerIntent?.tx_ref!==intent.tx_ref||Number(providerIntent?.amount)!==Number(intent.amount)||String(providerIntent?.currency).toUpperCase()!=="MWK"||!checkoutUrl||!/^https:\/\/(checkout|test-checkout)\.paychangu\.com\//.test(checkoutUrl)){
-   await serviceClient.rpc("fail_marketplace_payment",{p_tx_ref:intent.tx_ref,p_reason:result?.message||"PayChangu could not create checkout."});
+   const{error:failError}=await serviceClient.rpc("fail_marketplace_payment",{p_tx_ref:intent.tx_ref,p_reason:result?.message||"PayChangu could not create checkout."});if(failError)console.error("FAIL_MARKETPLACE_PAYMENT_RPC_ERROR",JSON.stringify({message:failError.message,details:failError.details,hint:failError.hint,code:failError.code}),"PAYCHANGU_RESPONSE",JSON.stringify({http_status:response.status,status:result?.status,message:result?.message}));
    return json({error:result?.message||"Payment checkout could not be created.",tx_ref:intent.tx_ref},502);
   }
   const{error:updateError}=await serviceClient.from("marketplace_transactions").update({checkout_url:checkoutUrl,provider_status:"checkout_created",updated_at:new Date().toISOString()}).eq("id",intent.transaction_id);if(updateError)throw updateError;
