@@ -13,7 +13,7 @@ Deno.serve(async req=>{
   const{data:{user},error:userError}=await userClient.auth.getUser();if(userError||!user)return json({error:"Your session is invalid. Sign in again."},401);
   const body=await req.json(),orderIds=body.order_ids,method=body.method,mobile=String(body.mobile||"").trim();
   if(!Array.isArray(orderIds)||!orderIds.length||orderIds.length>30||!["airtel_money","tnm_mpamba","card"].includes(method))return json({error:"Invalid order or payment method."},400);
-  const normalizedMobile=mobile.replace(/[\s-]/g,"").replace(/^(?:\+?265|0)/,"");
+  const normalizedMobile=mobile.replace(/\D/g,"").replace(/^265/,"").replace(/^0/,"");
   if(method!=="card"&&!/^\d{9}$/.test(normalizedMobile))return json({error:"Enter a valid Malawi mobile-money number using 9 digits."},400);
   const{data:intent,error:intentError}=await userClient.rpc("create_marketplace_payment_intent",{p_order_ids:orderIds,p_method:method});if(intentError)throw intentError;
   const serviceClient=createClient(url,service);
