@@ -58,8 +58,6 @@ begin
    if v_zone_id is null then raise exception 'Select a delivery zone for every seller in your cart.';end if;
    select * into v_zone from public.seller_delivery_zones where id=v_zone_id and seller_id=(v_order->>'seller_id')::uuid and is_active;
    if not found then raise exception 'A selected delivery zone is no longer available.';end if;
-   if lower(trim(v_zone.city))<>lower(trim(coalesce(p_delivery_address->>'city',''))) then raise exception 'The selected delivery zone does not match the delivery city.';end if;
-   if coalesce(v_zone.district,'')<>'' and coalesce(trim(coalesce(p_delivery_address->>'region',p_delivery_address->>'district','')),'')<>'' and lower(trim(v_zone.district))<>lower(trim(coalesce(p_delivery_address->>'region',p_delivery_address->>'district',''))) then raise exception 'The selected delivery zone does not match the delivery district.';end if;
    v_fee:=v_zone.delivery_fee;v_eta:=now()+make_interval(days=>ceil((v_zone.min_days+v_zone.max_days)::numeric/2)::integer);
   else
    if not v_settings.pickup_enabled then raise exception 'This seller does not currently offer pickup.';end if;
