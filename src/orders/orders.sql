@@ -119,7 +119,7 @@ begin
     raise exception 'Enter the recipient name, phone, city and delivery address.';
   end if;
   if p_delivery_method not in('home_delivery','pickup') then raise exception 'Choose a valid delivery method.'; end if;
-  if p_payment_method not in('cash_on_delivery','mobile_money','bank_transfer') then raise exception 'Choose a valid payment method.'; end if;
+  if coalesce(p_payment_method,'') not in('cash_on_delivery','airtel_money','tnm_mpamba','card') then raise exception 'Choose a valid payment method.'; end if;
   if exists(select 1 from jsonb_array_elements(p_items) i where coalesce((i->>'quantity')::integer,0)<1) then raise exception 'Invalid product quantity.'; end if;
 
   for v_seller in select distinct p.seller_id
@@ -150,7 +150,7 @@ begin
     end loop;
     v_order_number:='MH-'||to_char(now(),'YYMMDD')||'-'||upper(substr(encode(gen_random_bytes(5),'hex'),1,8));
     insert into public.seller_orders(seller_id,customer_id,customer_name,order_number,items,subtotal,shipping_amount,discount_amount,total_amount,currency,status,payment_status,delivery_method,delivery_address,payment_method,customer_note)
-    values(v_seller,v_uid,(select full_name from public.profiles where id=v_uid),v_order_number,v_items,v_subtotal,0,v_subtotal-v_grand_total,v_grand_total,'MWK','pending','pending',p_delivery_method,p_delivery_address,p_payment_method,nullif(p_customer_note,''))
+    values(v_seller,v_uid,(select full_name from public.profiles where id=v_uid),v_order_number,v_items,v_subtotal,0,v_subtotal-v_grand_total,v_grand_total,'MWK',case when p_payment_method='cash_on_delivery' then 'confirmed' else 'pending' end,'pending',p_delivery_method,p_delivery_address,p_payment_method,nullif(p_customer_note,''))
     returning id into v_order_id;
     v_result:=v_result||jsonb_build_array(jsonb_build_object('id',v_order_id,'order_number',v_order_number,'seller_id',v_seller,'total_amount',v_grand_total));
   end loop;
