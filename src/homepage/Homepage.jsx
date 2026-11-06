@@ -18,18 +18,18 @@ const uniqueProducts=(items,excluded=new Set())=>items.filter(p=>p?.id&&!exclude
 export default function Homepage(){
  const{products,loading,error,addToCart}=useStorefront();
  const location=useLocation(),navigate=useNavigate(),params=new URLSearchParams(location.search);
- const[search,S]=useState(params.get("search")||""),[category,C]=useState(params.get("category")||"");
+ const[search,S]=useState(params.get("search")||""),[category,C]=useState(params.get("category")||"All category");
  const[min,Min]=useState(""),[max,Max]=useState(""),[availability,A]=useState("all"),[sort,Sort]=useState(params.get("sort")||"newest");
  const[locationFilter,LocationFilter]=useState(""),[rating,Rating]=useState("0"),[searchType,SearchType]=useState(params.get("type")||"all");
  const[sellerFilter,SellerFilter]=useState(params.get("seller")||""),[stores,Stores]=useState([]),[recent,Recent]=useState(readRecent),[quick,Q]=useState(null),[cartOpen,CO]=useState(false);
- useEffect(()=>{const p=new URLSearchParams(location.search);S(p.get("search")||"");C(p.get("category")||"");Sort(p.get("sort")||"newest");SearchType(p.get("type")||"all");SellerFilter(p.get("seller")||"")},[location.search]);
+ useEffect(()=>{const p=new URLSearchParams(location.search);S(p.get("search")||"");C(p.get("category")||"All category");Sort(p.get("sort")||"newest");SearchType(p.get("type")||"all");SellerFilter(p.get("seller")||"")},[location.search]);
  useEffect(()=>{let active=true;if(!isSupabaseConfigured)return;supabase.from("seller_stores").select("seller_id,store_name,description,logo_url,city,region,country").eq("is_public",true).then(({data})=>{if(active)Stores(data||[])});return()=>{active=false}},[]);
  const storeById=useMemo(()=>Object.fromEntries(stores.map(s=>[String(s.seller_id),s])),[stores]);
  const filtered=useMemo(()=>{
   let list=searchType==="seller"||searchType==="business"?[]:[...products],term=search.trim().toLowerCase();
   if(searchType!=="seller"&&searchType!=="business"&&term)list=list.filter(p=>[p.name,p.title,p.description,p.brand,p.store_name,p.seller_name,productCategory(p),(p.tags||[]).join(" ")].some(v=>String(v||"").toLowerCase().includes(term)));
   if(searchType==="category"&&term)list=list.filter(p=>productCategory(p).toLowerCase().includes(term));
-  if(category)list=list.filter(p=>productCategory(p).toLowerCase()===category.toLowerCase());
+  if(category&&category!=="All category")list=list.filter(p=>productCategory(p).toLowerCase()===category.toLowerCase());
   if(sellerFilter)list=list.filter(p=>String(p.seller_id)===sellerFilter);
   if(min!=="")list=list.filter(p=>productPrice(p)>=Number(min));
   if(max!=="")list=list.filter(p=>productPrice(p)<=Number(max));
@@ -41,7 +41,7 @@ export default function Homepage(){
   return list;
  },[products,search,searchType,category,min,max,availability,sort,locationFilter,rating,sellerFilter,storeById]);
  const storeResults=useMemo(()=>{const term=search.trim().toLowerCase();if(!term||!["all","seller","business"].includes(searchType))return[];return stores.filter(s=>[s.store_name,s.description,s.city,s.region,s.country].some(v=>String(v||"").toLowerCase().includes(term)))},[stores,search,searchType]);
- const categoryProducts=useMemo(()=>category?products.filter(p=>productCategory(p).toLowerCase()===category.toLowerCase()):products,[products,category]);
+ const categoryProducts=useMemo(()=>category&&category!=="All category"?products.filter(p=>productCategory(p).toLowerCase()===category.toLowerCase()):products,[products,category]);
  const featured=uniqueProducts(categoryProducts.filter(p=>p.is_featured||p.featured));
  const featuredIds=new Set(featured.map(p=>String(p.id)));
  const recommended=uniqueProducts(categoryProducts.filter(p=>p.is_recommended||p.recommended),featuredIds);
@@ -52,7 +52,7 @@ export default function Homepage(){
  const suggestions=[...new Set([...products.slice(0,5).map(productCategory),...products.slice(0,5).map(productName)])].filter(Boolean).slice(0,8);
  function rememberSearch(){const value=search.trim();if(!value)return;const next=[value,...recent.filter(x=>x.toLowerCase()!==value.toLowerCase())].slice(0,8);Recent(next);localStorage.setItem("market-hub-recent-searches",JSON.stringify(next))}
  function searchSubmit(e){e.preventDefault();rememberSearch();navigate("/?search="+encodeURIComponent(search)+"&type="+encodeURIComponent(searchType)+"#products")}
- function selectCategory(name){C(name);S("");SearchType("category");SellerFilter("");navigate("/?category="+encodeURIComponent(name)+"&type=category#products")}
+ function selectCategory(name){const selected=name||"All category";C(selected);S("");SearchType("category");SellerFilter("");navigate(selected==="All category"?"/?type=category#products":"/?category="+encodeURIComponent(selected)+"&type=category#products")}
  function selectStore(s){SellerFilter(String(s.seller_id));S("");SearchType("all");navigate("/?seller="+encodeURIComponent(s.seller_id)+"#products")}
  const gridProps={onQuickView:Q,onAdd:addToCart,loading:false};
  const shelves=[["HANDPICKED FOR YOU","Featured products",featured],["A LITTLE INSPIRATION","Recommended for you",recommended],["LOVED BY SHOPPERS","Popular products",popular],["JUST ARRIVED","Latest products",latest]];
@@ -63,7 +63,7 @@ export default function Homepage(){
   <div className="mh-store-layout"><div className="mh-store-main">
   {shelves.map(([eyebrow,title,items])=>items.length>0&&<section id={title==="Featured products"?"featured":title==="Latest products"?"latest":undefined} className="mh-section mh-product-shelf" key={title}><div className="mh-section-heading"><div><span className="mh-eyebrow">{eyebrow}</span><h2>{title}</h2></div><a href="#products">Shop all <ArrowRight size={15}/></a></div><ProductGrid products={items} {...gridProps}/></section>)}
   <section className="mh-section" id="products">
-   <div className="mh-section-heading"><div><span className="mh-eyebrow">THE MARKETPLACE</span><h2>{sellerFilter?"Products from selected business":category||"Explore all products"}</h2></div><span className="mh-results-count">{filtered.length} products{storeResults.length?" · "+storeResults.length+" businesses":""}</span></div>
+   <div className="mh-section-heading"><div><span className="mh-eyebrow">THE MARKETPLACE</span><h2>{sellerFilter?"Products from selected business":category==="All category"?"Explore all products":category||"Explore all products"}</h2></div><span className="mh-results-count">{filtered.length} products{storeResults.length?" · "+storeResults.length+" businesses":""}</span></div>
    <ProductSearch value={search} onChange={S} onSubmit={searchSubmit} type={searchType} onTypeChange={SearchType} recent={recent} suggestions={suggestions} onPick={v=>S(v)}/>
    <ProductFilters products={products} category={category} setCategory={v=>{C(v);SellerFilter("")}} min={min} setMin={Min} max={max} setMax={Max} availability={availability} setAvailability={A} sort={sort} setSort={Sort} location={locationFilter} setLocation={LocationFilter} rating={rating} setRating={Rating}/>
    {recent.length>0&&<div className="mh-recent-searches"><b>Recent searches</b>{recent.map(v=><button key={v} onClick={()=>{S(v);SearchType("all");navigate("/?search="+encodeURIComponent(v)+"#products")}}>{v}</button>)}</div>}
