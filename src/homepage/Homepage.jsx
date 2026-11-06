@@ -41,13 +41,14 @@ export default function Homepage(){
   return list;
  },[products,search,searchType,category,min,max,availability,sort,locationFilter,rating,sellerFilter,storeById]);
  const storeResults=useMemo(()=>{const term=search.trim().toLowerCase();if(!term||!["all","seller","business"].includes(searchType))return[];return stores.filter(s=>[s.store_name,s.description,s.city,s.region,s.country].some(v=>String(v||"").toLowerCase().includes(term)))},[stores,search,searchType]);
- const featured=uniqueProducts(products.filter(p=>p.is_featured||p.featured));
+ const categoryProducts=useMemo(()=>category?products.filter(p=>productCategory(p).toLowerCase()===category.toLowerCase()):products,[products,category]);
+ const featured=uniqueProducts(categoryProducts.filter(p=>p.is_featured||p.featured));
  const featuredIds=new Set(featured.map(p=>String(p.id)));
- const recommended=uniqueProducts(products.filter(p=>p.is_recommended||p.recommended),featuredIds);
+ const recommended=uniqueProducts(categoryProducts.filter(p=>p.is_recommended||p.recommended),featuredIds);
  const curatedIds=new Set([...featuredIds,...recommended.map(p=>String(p.id))]);
- const popular=uniqueProducts([...products].sort((a,b)=>Number(b.sales_count||b.views_count||b.views||0)-Number(a.sales_count||a.views_count||a.views||0)),curatedIds);
+ const popular=uniqueProducts([...categoryProducts].sort((a,b)=>Number(b.sales_count||b.views_count||b.views||0)-Number(a.sales_count||a.views_count||a.views||0)),curatedIds);
  const shelfIds=new Set([...curatedIds,...popular.map(p=>String(p.id))]);
- const latest=uniqueProducts([...products].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)),shelfIds);
+ const latest=uniqueProducts([...categoryProducts].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)),shelfIds);
  const suggestions=[...new Set([...products.slice(0,5).map(productCategory),...products.slice(0,5).map(productName)])].filter(Boolean).slice(0,8);
  function rememberSearch(){const value=search.trim();if(!value)return;const next=[value,...recent.filter(x=>x.toLowerCase()!==value.toLowerCase())].slice(0,8);Recent(next);localStorage.setItem("market-hub-recent-searches",JSON.stringify(next))}
  function searchSubmit(e){e.preventDefault();rememberSearch();navigate("/?search="+encodeURIComponent(search)+"&type="+encodeURIComponent(searchType)+"#products")}
