@@ -28,8 +28,3 @@ update public.products
 set availability_status = 'out_of_stock'
 where coalesce(stock, 0) <= 0
   and availability_status is distinct from 'out_of_stock';
-
-update public.products
-set availability_status = 'available'
-where stock > 0
-  and availability_status = 'out_of_stock';
