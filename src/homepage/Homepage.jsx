@@ -57,7 +57,7 @@ export default function Homepage(){
  const gridProps={onQuickView:Q,onAdd:addToCart,loading:false};
  const shelves=[["HANDPICKED FOR YOU","Featured products",featured],["A LITTLE INSPIRATION","Recommended for you",recommended],["LOVED BY SHOPPERS","Popular products",popular],["JUST ARRIVED","Latest products",latest]];
  return <main className="mh-shell">
-  <StoreHeader onCart={()=>CO(true)} search={search} setSearch={S} products={products} onSelectCategory={selectCategory}/>
+  <StoreHeader onCart={()=>CO(true)} search={search} setSearch={S} products={products} onSelectCategory={selectCategory} selectedCategory={category}/>
   <HeroBanner search={search} setSearch={S} onSearch={searchSubmit}/>
   <PromotionalBanners/>
   <div className="mh-store-layout"><div className="mh-store-main">
