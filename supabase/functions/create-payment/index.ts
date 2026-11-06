@@ -13,12 +13,13 @@ Deno.serve(async req=>{
   const{data:{user},error:userError}=await userClient.auth.getUser();if(userError||!user)return json({error:"Your session is invalid. Sign in again."},401);
   const body=await req.json(),orderIds=body.order_ids,method=body.method,mobile=String(body.mobile||"").trim();
   if(!Array.isArray(orderIds)||!orderIds.length||orderIds.length>30||!["airtel_money","tnm_mpamba","card"].includes(method))return json({error:"Invalid order or payment method."},400);
-  if(method!=="card"&&!/^(?:\+?265|0)?\d{9}$/.test(mobile.replace(/[\s-]/g,"")))return json({error:"Enter a valid Malawi mobile-money number."},400);
+  const normalizedMobile=mobile.replace(/[\s-]/g,"").replace(/^(?:\+?265|0)/,"");
+  if(method!=="card"&&!/^\d{9}$/.test(normalizedMobile))return json({error:"Enter a valid Malawi mobile-money number using 9 digits."},400);
   const{data:intent,error:intentError}=await userClient.rpc("create_marketplace_payment_intent",{p_order_ids:orderIds,p_method:method});if(intentError)throw intentError;
   const serviceClient=createClient(url,service);
   if(method!=="card"){
    const chargeId=intent.tx_ref,operator=operators[method];
-   const payload={amount:String(intent.amount),mobile:mobile.replace(/[\s-]/g,""),mobile_money_operator_ref_id:operator,charge_id:chargeId,email:intent.email||user.email||"",first_name:intent.first_name||"Customer",last_name:intent.last_name||""};
+   const payload={amount:String(intent.amount),mobile:normalizedMobile,mobile_money_operator_ref_id:operator,charge_id:chargeId,email:intent.email||user.email||"",first_name:intent.first_name||"Customer",last_name:intent.last_name||""};
    const response=await fetch("https://api.paychangu.com/mobile-money/payments/initialize",{method:"POST",headers:{"Accept":"application/json","Content-Type":"application/json","Authorization":"Bearer "+secret},body:JSON.stringify(payload)});
    const result=await response.json().catch(()=>({})),payment=result?.data;
    if(!response.ok||result?.status!=="success"||!payment?.charge_id||String(payment.charge_id)!==chargeId){
