@@ -12,7 +12,7 @@ create table if not exists public.marketplace_refund_evidence (
   currency text not null default 'MWK' check (currency = 'MWK'),
   recorded_by uuid not null references public.profiles(id) on delete restrict,
   created_at timestamptz not null default now(),
-  check ((refund_request_id is not null)::integer + (transaction_id is not null)::integer = 1)
+  check ((refund_request_id is not null) <> (transaction_id is not null))
 );
 
 create unique index if not exists marketplace_refund_evidence_request_uidx
@@ -157,6 +157,8 @@ begin
   return new;
 end;
 $$;
+
+revoke all on function public.apply_marketplace_refund() from public, anon, authenticated, service_role;
 
 create or replace function public.admin_confirm_marketplace_refund(
   p_refund_request_id uuid,
