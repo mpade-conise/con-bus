@@ -51,13 +51,13 @@ export default function Homepage(){
  const latest=uniqueProducts([...categoryProducts].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)),shelfIds);
  const suggestions=[...new Set([...products.slice(0,5).map(productCategory),...products.slice(0,5).map(productName)])].filter(Boolean).slice(0,8);
  function rememberSearch(){const value=search.trim();if(!value)return;const next=[value,...recent.filter(x=>x.toLowerCase()!==value.toLowerCase())].slice(0,8);Recent(next);localStorage.setItem("market-hub-recent-searches",JSON.stringify(next))}
- function searchSubmit(e){e.preventDefault();rememberSearch();navigate("/?search="+encodeURIComponent(search)+"&type="+encodeURIComponent(searchType)+"#products")}
+ function searchSubmit(e){e.preventDefault();const value=search.trim();if(value){const next=[value,...recent.filter(x=>x.toLowerCase()!==value.toLowerCase())].slice(0,8);Recent(next);localStorage.setItem("market-hub-recent-searches",JSON.stringify(next))}SearchType("all");SellerFilter("");C("All category");navigate("/?search="+encodeURIComponent(value)+"&type=all#products")}
  function selectCategory(name){const selected=name||"All category";C(selected);S("");SearchType("category");SellerFilter("");navigate(selected==="All category"?"/?type=category#products":"/?category="+encodeURIComponent(selected)+"&type=category#products")}
  function selectStore(s){SellerFilter(String(s.seller_id));S("");SearchType("all");navigate("/?seller="+encodeURIComponent(s.seller_id)+"#products")}
  const gridProps={onQuickView:Q,onAdd:addToCart,loading:false,sellersById:storeById};
  const shelves=[["HANDPICKED FOR YOU","Featured products",featured],["A LITTLE INSPIRATION","Recommended for you",recommended],["LOVED BY SHOPPERS","Popular products",popular],["JUST ARRIVED","Latest products",latest]];
  return <main className="mh-shell">
-  <StoreHeader onCart={()=>CO(true)} search={search} setSearch={S} products={products} onSelectCategory={selectCategory} selectedCategory={category}/>
+  <StoreHeader onCart={()=>CO(true)} search={search} setSearch={S} onSearch={searchSubmit} products={products} onSelectCategory={selectCategory} selectedCategory={category}/>
   <HeroBanner search={search} setSearch={S} onSearch={searchSubmit}/>
   <PromotionalBanners/>
   <div className="mh-store-layout"><div className="mh-store-main">
