@@ -19,7 +19,7 @@ Deno.serve(async req=>{
   if(method!=="card"){
    const chargeId=intent.tx_ref,operator=operators[method];
    const payload={amount:String(intent.amount),mobile:mobile.replace(/[\s-]/g,""),mobile_money_operator_ref_id:operator,charge_id:chargeId,email:intent.email||user.email||"",first_name:intent.first_name||"Customer",last_name:intent.last_name||""};
-   const response=await fetch("https://api.paychangu.com/mobile-money/payments/initialize",{method:"POST",headers:{"Accept":"application/json","Content-Type":"application/json","Authorization:"Bearer "+secret},body:JSON.stringify(payload)});
+   const response=await fetch("https://api.paychangu.com/mobile-money/payments/initialize",{method:"POST",headers:{"Accept":"application/json","Content-Type":"application/json","Authorization":"Bearer "+secret},body:JSON.stringify(payload)});
    const result=await response.json().catch(()=>({})),payment=result?.data;
    if(!response.ok||result?.status!=="success"||!payment?.charge_id||String(payment.charge_id)!==chargeId){
     await serviceClient.rpc("fail_marketplace_payment",{p_tx_ref:intent.tx_ref,p_reason:result?.message||"PayChangu could not initialize mobile-money payment."});
