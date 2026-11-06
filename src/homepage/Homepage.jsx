@@ -6,7 +6,6 @@ import{supabase,isSupabaseConfigured}from"../authentication/supabase.js";
 import StoreHeader from"./StoreHeader.jsx";
 import HeroBanner from"./HeroBanner.jsx";
 import PromotionalBanners from"./PromotionalBanners.jsx";
-import CategoryBrowser from"./CategoryBrowser.jsx";
 import ProductSearch from"./ProductSearch.jsx";
 import ProductFilters from"./ProductFilters.jsx";
 import ProductGrid from"./ProductGrid.jsx";
@@ -57,7 +56,7 @@ export default function Homepage(){
  const gridProps={onQuickView:Q,onAdd:addToCart,loading:false};
  const shelves=[["HANDPICKED FOR YOU","Featured products",featured],["A LITTLE INSPIRATION","Recommended for you",recommended],["LOVED BY SHOPPERS","Popular products",popular],["JUST ARRIVED","Latest products",latest]];
  return <main className="mh-shell">
-  <StoreHeader onCart={()=>CO(true)} search={search} setSearch={S}/>
+  <StoreHeader onCart={()=>CO(true)} search={search} setSearch={S} products={products} onSelectCategory={selectCategory}/>
   <HeroBanner search={search} setSearch={S} onSearch={searchSubmit}/>
   <PromotionalBanners/>
   <div className="mh-store-layout"><div className="mh-store-main">
@@ -71,7 +70,7 @@ export default function Homepage(){
    {error&&<p className="mh-data-error">Could not load listings: {error}. Check the products table and its public read policy in Supabase.</p>}
    {filtered.length>0?<ProductGrid products={filtered} onQuickView={Q} onAdd={addToCart} loading={loading}/>:!loading&&<div className="mh-empty"><strong>No matching products found</strong><p>Try another keyword or adjust your filters.</p></div>}
   </section>
-  </div><aside className="mh-store-sidebar"><CategoryBrowser products={products} onSelect={selectCategory}/></aside></div>
+  </div></div>
   <section className="mh-seller-callout"><div><span className="mh-eyebrow">SELL ON MARKET HUB</span><h2>Your products deserve to be discovered.</h2><p>Open your seller account and reach customers through one shared marketplace.</p></div><a href="/auth/register/seller">Start selling <ArrowRight size={16}/></a></section>
   <footer className="mh-footer"><a className="mh-brand" href="/" aria-label="Market Hub home"><img className="mh-brand-logo" src="/market-hub-logo.svg" alt=""/><span className="mh-brand-name">market<b>hub</b></span></a><p>© {new Date().getFullYear()} Market Hub. Discover. Connect. Shop.</p><div><a href="/auth/login">Sign in</a><a href="/auth/register/customer">Create account</a></div></footer>
   <QuickView product={quick} onClose={()=>Q(null)} onAdd={addToCart}/><CartDrawer open={cartOpen} onClose={()=>CO(false)}/>
