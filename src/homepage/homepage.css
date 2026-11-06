@@ -169,3 +169,5 @@
 @media(max-width:420px){.mh-product-grid{gap:11px}.mh-product-info{padding:11px}.mh-image-wrap img{padding:10px}}
 
 .mh-category.active{border-color:var(--mh-primary,#2563eb);background:rgba(37,99,235,.08);color:var(--mh-primary,#2563eb)}
+
+.mh-product-image{position:relative}.mh-out-stock-overlay{position:absolute;z-index:2;left:9px;bottom:9px;padding:6px 9px;border-radius:5px;background:#293747e8;color:#fff;font-size:8px;font-weight:800;letter-spacing:.7px}.mh-card-stock{display:block;margin-top:5px;color:#16865e;font-size:9px;font-weight:700}.mh-card-stock.unavailable,.mh-quick-stock.unavailable,.catalog-stock-state.unavailable{color:#b54747}.mh-quick-stock{font-size:11px;font-weight:700;color:#16865e;margin:8px 0}.catalog-stock-state{display:block;margin-top:4px;font-size:10px;color:#16865e;font-style:normal}.seller-actions button{min-width:30px}.seller-actions button[title="Edit / restock"],.seller-actions button[title="Delete product"]{color:#334155}
