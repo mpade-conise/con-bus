@@ -25,7 +25,8 @@ Deno.serve(async req=>{
    const result=await response.json().catch(()=>({})),payment=result?.data;
    if(!response.ok||result?.status!=="success"||!payment?.charge_id||String(payment.charge_id)!==chargeId){
     const{error:failError}=await serviceClient.rpc("fail_marketplace_payment",{p_tx_ref:intent.tx_ref,p_reason:result?.message||"PayChangu could not initialize mobile-money payment."});if(failError)console.error("FAIL_MARKETPLACE_PAYMENT_RPC_ERROR",JSON.stringify({message:failError.message,details:failError.details,hint:failError.hint,code:failError.code}),"PAYCHANGU_RESPONSE",JSON.stringify({http_status:response.status,status:result?.status,message:result?.message}));
-    return json({error:result?.message||"Mobile-money payment could not be started."},502);
+    console.error("PAYCHANGU_INIT_ERROR",JSON.stringify({http_status:response.status,message:result?.message,provider_mobile_length:normalizedMobile.length,provider_mobile_digit_count:(normalizedMobile.match(/\\d/g)||[]).length,operator,tx_ref:intent.tx_ref}));
+    return json({error:result?.message||"Mobile-money payment could not be started.",diagnostics:{sent_mobile_length:normalizedMobile.length,sent_mobile_digit_count:(normalizedMobile.match(/\\d/g)||[]).length,operator}},502);
    }
    const{error:updateError}=await serviceClient.from("marketplace_transactions").update({provider_charge_id:String(payment.charge_id),provider_reference:payment.ref_id||null,provider_status:payment.status||"pending",updated_at:new Date().toISOString()}).eq("id",intent.transaction_id);
    if(updateError)throw updateError;
