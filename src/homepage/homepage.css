@@ -74,3 +74,17 @@
 
 /* Keep checkout actions visible while cart items scroll independently. */
 .mh-cart-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column}.mh-cart-items{flex:0 0 auto;min-height:0;overflow:visible}.mh-cart-drawer footer{flex:0 0 auto;background:#fff;padding-bottom:env(safe-area-inset-bottom,0px)}.mh-cart-drawer footer>a{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px}.mh-cart-drawer footer .mh-continue-shopping{width:100%;height:38px;margin-top:8px;border:1px solid #e7ebef;border-radius:7px;background:#fff;color:#344357;font-size:11px;font-weight:700}
+
+/* Cart drawer: keep totals stacked and checkout controls anchored below the scroll area. */
+.mh-cart-drawer{box-sizing:border-box;min-height:0;overflow:hidden}
+.mh-cart-drawer>*{min-width:0}
+.mh-cart-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.mh-cart-drawer footer{display:flex;flex:0 0 auto;flex-direction:column;align-items:stretch;gap:0;width:100%;box-sizing:border-box;margin-top:auto;padding:12px 0 max(8px,env(safe-area-inset-bottom,0px));border-top:1px solid #edf0f3;background:#fff}
+.mh-cart-drawer footer>div{display:flex;flex:0 0 auto;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;width:100%;margin:6px 0;font-size:12px;line-height:1.4}
+.mh-cart-drawer footer>div span{min-width:0;color:#647184}
+.mh-cart-drawer footer>div strong{flex:none;white-space:nowrap;text-align:right;font-size:13px}
+.mh-cart-drawer footer>div.mh-cart-total{margin-top:8px;padding-top:10px;border-top:1px solid #edf0f3}
+.mh-cart-drawer footer p{margin:7px 0 2px;line-height:1.5}
+.mh-cart-drawer footer>a{display:flex;flex:0 0 44px;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;margin-top:10px}
+.mh-cart-drawer footer>.mh-continue-shopping{flex:0 0 36px;width:100%;box-sizing:border-box;margin-top:7px}
+@media(max-height:650px){.mh-cart-drawer footer{padding-top:8px}.mh-cart-drawer footer>div{margin:4px 0}.mh-cart-drawer footer p{font-size:10px;margin:4px 0}}
