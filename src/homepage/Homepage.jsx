@@ -23,7 +23,7 @@ export default function Homepage(){
  const[locationFilter,LocationFilter]=useState(""),[rating,Rating]=useState("0"),[searchType,SearchType]=useState(params.get("type")||"all");
  const[sellerFilter,SellerFilter]=useState(params.get("seller")||""),[stores,Stores]=useState([]),[recent,Recent]=useState(readRecent),[quick,Q]=useState(null),[cartOpen,CO]=useState(false);
  useEffect(()=>{const p=new URLSearchParams(location.search);S(p.get("search")||"");C(p.get("category")||"All category");Sort(p.get("sort")||"newest");SearchType(p.get("type")||"all");SellerFilter(p.get("seller")||"")},[location.search]);
- useEffect(()=>{let active=true;if(!isSupabaseConfigured)return;supabase.from("seller_stores").select("seller_id,store_name,description,logo_url,city,region,country").eq("is_public",true).then(({data})=>{if(active)Stores(data||[])});return()=>{active=false}},[]);
+ useEffect(()=>{let active=true;if(!isSupabaseConfigured)return; (async()=>{const{data,error}=await supabase.from("seller_stores").select("seller_id,store_name,description,logo_url,city,region,country").eq("is_public",true);if(error||!active)return;const rows=data||[],ids=rows.map(s=>s.seller_id).filter(Boolean);if(!ids.length){Stores([]);return}const[profiles,delivery]=await Promise.all([supabase.from("profiles").select("id,full_name,avatar_url").in("id",ids),supabase.from("seller_delivery_settings").select("seller_id,home_delivery_enabled,pickup_enabled").in("seller_id",ids)]);if(!active)return;const profileMap=Object.fromEntries((profiles.data||[]).map(p=>[String(p.id),p])),deliveryMap=Object.fromEntries((delivery.data||[]).map(d=>[String(d.seller_id),d]));Stores(rows.map(s=>({...s,...profileMap[String(s.seller_id)],...(deliveryMap[String(s.seller_id)]||{})})))})();return()=>{active=false}},[]);
  const storeById=useMemo(()=>Object.fromEntries(stores.map(s=>[String(s.seller_id),s])),[stores]);
  const filtered=useMemo(()=>{
   let list=searchType==="seller"||searchType==="business"?[]:[...products],term=search.trim().toLowerCase();
@@ -54,7 +54,7 @@ export default function Homepage(){
  function searchSubmit(e){e.preventDefault();rememberSearch();navigate("/?search="+encodeURIComponent(search)+"&type="+encodeURIComponent(searchType)+"#products")}
  function selectCategory(name){const selected=name||"All category";C(selected);S("");SearchType("category");SellerFilter("");navigate(selected==="All category"?"/?type=category#products":"/?category="+encodeURIComponent(selected)+"&type=category#products")}
  function selectStore(s){SellerFilter(String(s.seller_id));S("");SearchType("all");navigate("/?seller="+encodeURIComponent(s.seller_id)+"#products")}
- const gridProps={onQuickView:Q,onAdd:addToCart,loading:false};
+ const gridProps={onQuickView:Q,onAdd:addToCart,loading:false,sellersById:storeById};
  const shelves=[["HANDPICKED FOR YOU","Featured products",featured],["A LITTLE INSPIRATION","Recommended for you",recommended],["LOVED BY SHOPPERS","Popular products",popular],["JUST ARRIVED","Latest products",latest]];
  return <main className="mh-shell">
   <StoreHeader onCart={()=>CO(true)} search={search} setSearch={S} products={products} onSelectCategory={selectCategory} selectedCategory={category}/>
@@ -69,7 +69,7 @@ export default function Homepage(){
    {recent.length>0&&<div className="mh-recent-searches"><b>Recent searches</b>{recent.map(v=><button key={v} onClick={()=>{S(v);SearchType("all");navigate("/?search="+encodeURIComponent(v)+"#products")}}>{v}</button>)}</div>}
    {searchType!=="product"&&storeResults.length>0&&<div className="mh-store-results"><div className="mh-section-heading"><div><span className="mh-eyebrow">SELLERS & BUSINESSES</span><h2>Matching businesses</h2></div></div><div className="mh-store-result-grid">{storeResults.map(s=><article className="mh-store-result" key={s.seller_id}>{s.logo_url?<img src={s.logo_url} alt=""/>:<span className="mh-store-result-icon"><Store size={21}/></span>}<div><strong>{s.store_name}</strong><p>{s.description||"Marketplace seller"}</p><small><MapPin size={12}/>{[s.city,s.region,s.country].filter(Boolean).join(", ")||"Location not provided"}</small></div><button onClick={()=>selectStore(s)}>View products</button></article>)}</div></div>}
    {error&&<p className="mh-data-error">Could not load listings: {error}. Check the products table and its public read policy in Supabase.</p>}
-   {filtered.length>0?<ProductGrid products={filtered} onQuickView={Q} onAdd={addToCart} loading={loading}/>:!loading&&<div className="mh-empty"><strong>No matching products found</strong><p>Try another keyword or adjust your filters.</p></div>}
+   {filtered.length>0?<ProductGrid products={filtered} onQuickView={Q} onAdd={addToCart} loading={loading} sellersById={storeById}/>:!loading&&<div className="mh-empty"><strong>No matching products found</strong><p>Try another keyword or adjust your filters.</p></div>}
   </section>
   </div></div>
   <section className="mh-seller-callout"><div><span className="mh-eyebrow">SELL ON MARKET HUB</span><h2>Your products deserve to be discovered.</h2><p>Open your seller account and reach customers through one shared marketplace.</p></div><a href="/auth/register/seller">Start selling <ArrowRight size={16}/></a></section>
