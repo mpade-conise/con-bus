@@ -179,7 +179,7 @@ begin
   if coalesce(array_length(p_order_ids,1),0)=0 then raise exception 'Select at least one order to pay.'; end if;
   if (select count(distinct x) from unnest(p_order_ids) x)<>array_length(p_order_ids,1) then raise exception 'Duplicate order selected.'; end if;
   perform 1 from public.seller_orders where id=any(p_order_ids) and customer_id=v_uid for update;
-  if (select count(*) from public.seller_orders where id=any(p_order_ids) and customer_id=v_uid and status in('pending','confirmed') and payment_status in('pending','failed'))<>array_length(p_order_ids,1) then raise exception 'One or more orders cannot be paid.'; end if;
+  if (select count(*) from public.seller_orders where id=any(p_order_ids) and customer_id=v_uid and status='confirmed' and payment_status in('pending','failed'))<>array_length(p_order_ids,1) then raise exception 'One or more orders cannot be paid.'; end if;
   update public.marketplace_transactions t set status='expired',updated_at=now()
   where t.status='pending' and t.created_at<now()-interval '30 minutes' and exists(select 1 from public.payment_order_allocations a where a.transaction_id=t.id and a.order_id=any(p_order_ids));
   if exists(select 1 from public.marketplace_transactions t join public.payment_order_allocations a on a.transaction_id=t.id where t.status='pending' and a.order_id=any(p_order_ids)) then raise exception 'A payment is already in progress for this order. Wait for its result before retrying.'; end if;
@@ -446,9 +446,6 @@ create or replace function public.enforce_seller_order_transition()
 returns trigger language plpgsql set search_path=public as $$
 begin
  if new.status is distinct from old.status then
-   if old.status='pending' and new.status='confirmed' and old.payment_method in('airtel_money','tnm_mpamba','card') and old.payment_status<>'paid' then
-     raise exception 'Online payment must be verified before this order can be accepted.';
-   end if;
    if not (
      (old.status='pending' and new.status in('confirmed','cancelled')) or
      (old.status='confirmed' and new.status in('processing','cancelled')) or
