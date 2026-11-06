@@ -1,5 +1,6 @@
 import{Route}from"react-router-dom";
 import Login from"./Login.jsx";
+import RegistrationChoice from"./RegistrationChoice.jsx";
 import CustomerRegistration from"./CustomerRegistration.jsx";
 import SellerRegistration from"./SellerRegistration.jsx";
 import EmailVerification from"./EmailVerification.jsx";
@@ -19,6 +20,7 @@ import SecurityCenter from"./SecurityCenter.jsx";
 
 export const authRoutes=[
  <Route key="login" path="/auth/login" element={<Login/>}/>,
+ <Route key="register" path="/auth/register" element={<RegistrationChoice/>}/>,
  <Route key="register-customer" path="/auth/register/customer" element={<CustomerRegistration/>}/>,
  <Route key="register-seller" path="/auth/register/seller" element={<SellerRegistration/>}/>,
  <Route key="verify-email" path="/auth/verify-email" element={<EmailVerification/>}/>,
