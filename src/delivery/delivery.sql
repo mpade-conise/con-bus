@@ -59,12 +59,11 @@ begin
    select * into v_zone from public.seller_delivery_zones where id=v_zone_id and seller_id=(v_order->>'seller_id')::uuid and is_active;
    if not found then raise exception 'A selected delivery zone is no longer available.';end if;
    if lower(trim(v_zone.city))<>lower(trim(coalesce(p_delivery_address->>'city',''))) then raise exception 'The selected delivery zone does not match the delivery city.';end if;
-   if coalesce(v_zone.district,'')<>'' and lower(trim(v_zone.district))<>lower(trim(coalesce(p_delivery_address->>'region',p_delivery_address->>'district',''))) then raise exception 'The selected delivery zone does not match the delivery district.';end if;
+   if coalesce(v_zone.district,'')<>'' and coalesce(trim(coalesce(p_delivery_address->>'region',p_delivery_address->>'district','')),'')<>'' and lower(trim(v_zone.district))<>lower(trim(coalesce(p_delivery_address->>'region',p_delivery_address->>'district',''))) then raise exception 'The selected delivery zone does not match the delivery district.';end if;
    v_fee:=v_zone.delivery_fee;v_eta:=now()+make_interval(days=>ceil((v_zone.min_days+v_zone.max_days)::numeric/2)::integer);
   else
    if not v_settings.pickup_enabled then raise exception 'This seller does not currently offer pickup.';end if;
-   if coalesce(trim(v_settings.pickup_location),'')='' then raise exception 'This seller has not configured a pickup location yet.';end if;
-   v_location:=v_settings.pickup_location;v_eta:=now()+make_interval(days=>ceil((v_settings.default_min_days+v_settings.default_max_days)::numeric/2)::integer);
+   v_location:=coalesce(nullif(trim(v_settings.pickup_location),''),'Pickup location to be confirmed by the seller');v_eta:=now()+make_interval(days=>ceil((v_settings.default_min_days+v_settings.default_max_days)::numeric/2)::integer);
   end if;
   update public.seller_orders set shipping_amount=v_fee,total_amount=total_amount+v_fee,delivery_zone_id=v_zone_id,delivery_status=case when p_delivery_method='pickup' then 'ready_for_pickup' else 'pending' end,estimated_delivery_at=v_eta,pickup_location=v_location,delivery_instructions=nullif(p_delivery_address->>'instructions','') where id=(v_order->>'id')::uuid;
   insert into public.seller_order_events(order_id,actor_id,event_type,note) values((v_order->>'id')::uuid,auth.uid(),'delivery_configured',case when p_delivery_method='pickup' then 'Pickup selected'||coalesce(': '||v_location,'') else 'Home delivery zone: '||v_zone.zone_name||'; fee MWK '||v_fee end);
