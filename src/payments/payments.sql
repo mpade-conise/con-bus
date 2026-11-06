@@ -223,7 +223,7 @@ begin
   update public.marketplace_transactions set status='successful',provider_reference=p_provider_reference,provider_status=p_provider_status,provider_fee=coalesce(p_provider_fee,0),completed_at=now(),updated_at=now() where id=v_tx.id;
   update public.marketplace_transactions other set status='expired',updated_at=now()
   where other.id<>v_tx.id and other.status='pending' and exists(select 1 from public.payment_order_allocations mine join public.payment_order_allocations theirs on theirs.order_id=mine.order_id where mine.transaction_id=v_tx.id and theirs.transaction_id=other.id);
-  update public.seller_orders o set payment_status='paid' from public.payment_order_allocations a where a.transaction_id=v_tx.id and a.order_id=o.id;
+  update public.seller_orders o set payment_status='paid',status=case when o.status='pending' then 'confirmed' else o.status end from public.payment_order_allocations a where a.transaction_id=v_tx.id and a.order_id=o.id;
   insert into public.seller_earnings(seller_id,order_id,transaction_id,gross_amount,platform_fee,net_amount)
   select seller_id,order_id,v_tx.id,gross_amount,platform_fee,seller_net from public.payment_order_allocations where transaction_id=v_tx.id
   on conflict(order_id) do nothing;
@@ -351,7 +351,7 @@ begin
     end loop;
     v_order_number:='MH-'||to_char(now(),'YYMMDD')||'-'||upper(substr(encode(gen_random_bytes(5),'hex'),1,8));
     insert into public.seller_orders(seller_id,customer_id,customer_name,order_number,items,subtotal,shipping_amount,discount_amount,total_amount,currency,status,payment_status,delivery_method,delivery_address,payment_method,customer_note)
-    values(v_seller,v_uid,(select full_name from public.profiles where id=v_uid),v_order_number,v_items,v_subtotal,0,v_subtotal-v_grand_total,v_grand_total,'MWK','pending','pending',p_delivery_method,p_delivery_address,p_payment_method,nullif(p_customer_note,''))
+    values(v_seller,v_uid,(select full_name from public.profiles where id=v_uid),v_order_number,v_items,v_subtotal,0,v_subtotal-v_grand_total,v_grand_total,'MWK',case when p_payment_method='cash_on_delivery' then 'confirmed' else 'pending' end,'pending',p_delivery_method,p_delivery_address,p_payment_method,nullif(p_customer_note,''))
     returning id into v_order_id;
     v_result:=v_result||jsonb_build_array(jsonb_build_object('id',v_order_id,'order_number',v_order_number,'seller_id',v_seller,'total_amount',v_grand_total));
   end loop;
