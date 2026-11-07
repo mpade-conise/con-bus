@@ -1,6 +1,6 @@
 # Online payments and seller finance
 
-Run `payments.sql` in the Supabase SQL Editor **after** the existing migrations:
+Run the following SQL files in the Supabase SQL Editor, in order:
 1. `src/authentication/authentication.sql`
 2. `src/homepage/homepage.sql`
 3. `src/sellers/sellers.sql`
@@ -65,7 +65,7 @@ The marketplace sets its own `callback_url` on every payment request to `https:/
 ## Financial controls and boundaries
 - Platform fee defaults to **0%**. Configure the agreed commission in `marketplace_settings`; no commission rate is assumed. PayChangu's own processing fees are separate.
 - Minimum withdrawal defaults to 0 MWK until the marketplace owner configures a policy.
-- Withdrawal requests are reserved against available seller earnings. Payout attempts are stored separately with a unique charge ID and terminal-state protection. Ambiguous network/provider responses remain `processing` for verification and are never automatically resubmitted. Only a verified provider success changes the withdrawal to `paid`; a verified failure changes it to `failed` and releases the reservation.
+- Bank transfers require a valid PayChangu `bank_uuid` in the saved destination. The current seller withdrawal form does not yet collect bank selection, so use Airtel Money or TNM Mpamba for automated payouts until that UI is added.\n- Withdrawal requests are reserved against available seller earnings. Payout attempts are stored separately with a unique charge ID and terminal-state protection. Ambiguous network/provider responses remain `processing` for verification and are never automatically resubmitted. Only a verified provider success changes the withdrawal to `paid`; a verified failure changes it to `failed` and releases the reservation.
 - Refunds are also reconciled manually: process the refund through PayChangu first, then an administrator confirms it in the dashboard. This avoids falsely marking money as refunded.
 - The module does not store card numbers, CVV, or expiry details.
 - Failed payment attempts remain visible and eligible orders can retry from customer order history.
