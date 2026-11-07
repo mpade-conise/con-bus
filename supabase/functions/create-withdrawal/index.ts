@@ -19,7 +19,7 @@ Deno.serve(async req=>{
   if(!url||!anon||!service||!secret)throw new Error("Withdrawal service is not configured.");
   if(Deno.env.get("PAYCHANGU_PAYOUTS_ENABLED")!=="true")return json({error:"PayChangu payouts are not enabled for this merchant account. No payout was submitted."},503);
   const authorization=req.headers.get("Authorization");if(!authorization?.startsWith("Bearer "))return json({error:"Authentication required."},401);
-  const userClient=createClient(url,anon,{global:{headers:{Authorization:authorization}});
+  const userClient=createClient(url,anon,{global:{headers:{Authorization:authorization}}});
   const{data:{user},error:userError}=await userClient.auth.getUser();if(userError||!user)return json({error:"Your session is invalid. Sign in again."},401);
   const adminClient=createClient(url,service);
   const{data:profile,error:profileError}=await adminClient.from("profiles").select("role,is_active").eq("id",user.id).maybeSingle();
