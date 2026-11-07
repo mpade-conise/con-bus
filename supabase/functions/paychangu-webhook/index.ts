@@ -18,7 +18,7 @@ Deno.serve(async req=>{
   const{data:tx,error:lookupError}=await db.from("marketplace_transactions").select("id,tx_ref,amount,currency,status,payment_method,provider_charge_id").eq("tx_ref",txRef).maybeSingle();
   if(lookupError)throw lookupError;if(!tx)return new Response("Unknown transaction",{status:404});
   if(tx.status==="successful")return new Response("Already processed",{status:200});
-  if(tx.status!=="pending")return new Response("Transaction is no longer pending",{status:200});
+  if(!["pending","expired"].includes(tx.status))return new Response("Transaction is not eligible for payment verification",{status:200});
   const mobile=tx.payment_method!=="card",chargeId=tx.provider_charge_id||tx.tx_ref;
   const endpoint=mobile?"https://api.paychangu.com/mobile-money/payments/"+encodeURIComponent(chargeId)+"/verify":"https://api.paychangu.com/verify-payment/"+encodeURIComponent(tx.tx_ref);
   const verifyResponse=await fetch(endpoint,{headers:{"Accept":"application/json","Authorization":"Bearer "+secret}});
