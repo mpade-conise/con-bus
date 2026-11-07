@@ -15,7 +15,7 @@ Deno.serve(async req=>{
   const db=createClient(url,service);
   const{data:tx,error:lookupError}=await db.from("marketplace_transactions").select("id,tx_ref,customer_id,amount,currency,status,payment_method,provider_charge_id").eq("tx_ref",tx_ref).eq("customer_id",user.id).maybeSingle();
   if(lookupError)throw lookupError;if(!tx)return json({error:"Transaction not found."},404);
-  if(tx.status!=="pending")return json({status:tx.status});
+  if(!["pending","expired"].includes(tx.status))return json({status:tx.status});
   const mobile=tx.payment_method!=="card",chargeId=tx.provider_charge_id||tx.tx_ref;
   const endpoint=mobile?"https://api.paychangu.com/mobile-money/payments/"+encodeURIComponent(chargeId)+"/verify":"https://api.paychangu.com/verify-payment/"+encodeURIComponent(tx_ref);
   const response=await fetch(endpoint,{headers:{"Accept":"application/json","Authorization":"Bearer "+secret}});
