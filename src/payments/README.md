@@ -21,7 +21,7 @@ Deploy these Supabase Edge Functions from the repository:
 - `supabase/functions/create-payment/index.ts`: authenticates the customer, creates a database payment intent, and requests a PayChangu hosted checkout session.
 - `supabase/functions/payment-callback/index.ts`: receives the callback URL attached to each new marketplace checkout, verifies the transaction directly with PayChangu, checks the exact reference, amount and MWK currency, finalizes it once, and returns the customer to the marketplace.
 - `supabase/functions/paychangu-webhook/index.ts`: optional signed webhook receiver for cases where this marketplace can be configured as the merchant account's global webhook.
-- `supabase/functions/verify-payment/index.ts`: allows the signed-in customer return page to re-check a pending payment directly with PayChangu if the callback has not completed.
+- `supabase/functions/verify-payment/index.ts`: allows the signed-in customer return page to re-check a pending payment directly with PayChangu if the callback has not completed.\n- `supabase/functions/create-withdrawal/index.ts`: administrator-only seller payout initiation. It claims each withdrawal once, submits to the correct PayChangu disbursement endpoint, and fails closed unless `PAYCHANGU_PAYOUTS_ENABLED=true`.\n- `supabase/functions/verify-withdrawal/index.ts`: administrator-only payout verification using PayChangu's mobile-money or bank payout details endpoint. A withdrawal is marked paid only after its charge ID, amount, currency and successful provider status are verified.
 
 Set Supabase Edge Function secrets (never put these in Vite variables or commit them):
 - `PAYCHANGU_SECRET_KEY`: PayChangu API secret key.
@@ -58,7 +58,7 @@ The marketplace sets its own `callback_url` on every payment request to `https:/
 ## Financial controls and boundaries
 - Platform fee defaults to **0%**. Configure the agreed commission in `marketplace_settings`; no commission rate is assumed. PayChangu's own processing fees are separate.
 - Minimum withdrawal defaults to 0 MWK until the marketplace owner configures a policy.
-- Withdrawal requests are recorded and reserved against available seller earnings. The current admin workflow is manual: make/verify the payout in PayChangu or the bank, then record its status in the admin dashboard. Automated payout API execution is not enabled.
+- Withdrawal requests are reserved against available seller earnings. Payout attempts are stored separately with a unique charge ID and terminal-state protection. Ambiguous network/provider responses remain `processing` for verification and are never automatically resubmitted. Only a verified provider success changes the withdrawal to `paid`; a verified failure changes it to `failed` and releases the reservation.
 - Refunds are also reconciled manually: process the refund through PayChangu first, then an administrator confirms it in the dashboard. This avoids falsely marking money as refunded.
 - The module does not store card numbers, CVV, or expiry details.
 - Failed payment attempts remain visible and eligible orders can retry from customer order history.
