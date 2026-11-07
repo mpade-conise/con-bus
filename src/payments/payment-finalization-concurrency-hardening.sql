@@ -99,18 +99,9 @@ begin
       updated_at=now()
   where id=v_tx.id;
 
-  update public.marketplace_transactions other
-  set status='expired',updated_at=now()
-  where other.id<>v_tx.id
-    and other.status='pending'
-    and exists(
-      select 1
-      from public.payment_order_allocations mine
-      join public.payment_order_allocations theirs on theirs.order_id=mine.order_id
-      where mine.transaction_id=v_tx.id
-        and theirs.transaction_id=other.id
-    );
-
+  -- Other pending attempts are not rewritten here: each finalizer already
+  -- holds its own transaction row, so cross-updating another attempt here
+  -- could deadlock against that attempt waiting for the order lock.
   update public.seller_orders o
   set payment_status='paid',
       status=case when o.status='pending' then 'confirmed' else o.status end
