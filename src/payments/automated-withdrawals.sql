@@ -144,3 +144,29 @@ end;
 $$;
 revoke all on function public.admin_update_seller_withdrawal(uuid,text,text,text) from public, anon, service_role;
 grant execute on function public.admin_update_seller_withdrawal(uuid,text,text,text) to authenticated;
+
+create or replace function public.notify_seller_withdrawal_change()
+returns trigger language plpgsql security definer set search_path=public as $$
+begin
+  if new.status is distinct from old.status then
+    insert into public.marketplace_notifications(user_id,notification_type,title,message,related_id)
+    values(
+      new.seller_id,
+      'withdrawal_'||new.status,
+      'Withdrawal '||new.status,
+      case
+        when new.status='approved' then 'Your withdrawal request has been approved.'
+        when new.status='rejected' then 'Your withdrawal request was rejected.'
+        when new.status='processing' then 'Your withdrawal payout has been submitted and is being verified.'
+        when new.status='paid' then 'PayChangu has confirmed that your withdrawal was paid.'
+        when new.status='failed' then 'PayChangu confirmed that your withdrawal failed. The reserved amount is available again.'
+        else 'Your withdrawal status was updated.'
+      end,
+      new.id
+    );
+    insert into public.payment_reconciliation(tx_ref,provider_reference,expected_amount,received_amount,currency,result,notes,reconciled_by)
+    values(new.reference,new.provider_reference,new.amount,case when new.status='paid' then new.amount else null end,new.currency,'withdrawal_'||new.status,coalesce(new.admin_note,'Withdrawal status changed.'),auth.uid());
+  end if;
+  return new;
+end;
+$$;
