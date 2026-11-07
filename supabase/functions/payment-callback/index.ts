@@ -30,7 +30,7 @@ Deno.serve(async req=>{
   const db=createClient(supabaseUrl,service);
   const{data:tx,error:lookupError}=await db.from("marketplace_transactions").select("id,tx_ref,amount,currency,status").eq("tx_ref",txRef).maybeSingle();
   if(lookupError)throw lookupError;
-  if(tx&&tx.status==="pending"){
+  if(tx&&["pending","expired"].includes(tx.status)){
    const response=await fetch("https://api.paychangu.com/verify-payment/"+encodeURIComponent(txRef),{headers:{"Accept":"application/json","Authorization":"Bearer "+secret}});
    const result=await response.json().catch(()=>({}));const payment=result?.data;
    if(response.ok&&result?.status==="success"&&payment?.status==="success"){
