@@ -127,7 +127,7 @@ begin
   if auth.uid() is null or not exists (
     select 1 from public.profiles where id=auth.uid() and role='administrator' and is_active=true
   ) then raise exception 'Active administrator access required.'; end if;
-  if p_status <> 'rejected' then raise exception 'Use Approve & Pay to initiate a provider payout.'; end if;
+  if p_status is distinct from 'rejected' then raise exception 'Use Approve & Pay to initiate a provider payout.'; end if;
   if p_provider_reference is not null and btrim(p_provider_reference) <> '' then raise exception 'Provider references are recorded only after provider verification.'; end if;
   if length(coalesce(v_note,'')) > 1000 then raise exception 'Admin note must not exceed 1000 characters.'; end if;
 
