@@ -6,6 +6,8 @@ Run `payments.sql` in the Supabase SQL Editor **after** the existing migrations:
 3. `src/sellers/sellers.sql`
 4. `src/orders/orders.sql`
 5. `src/payments/payments.sql`
+6. `src/payments/withdrawal-payout-hardening.sql`
+7. `src/payments/automated-withdrawals.sql`
 
 ## Provider
 This module uses PayChangu Standard Checkout. Its hosted checkout can present Airtel Money, TNM Mpamba and Visa/Mastercard when those channels are enabled for the merchant account. The customer selects a preferred channel in checkout and completes payment on PayChangu's hosted page. Card data never passes through this website.
@@ -29,6 +31,7 @@ Set Supabase Edge Function secrets (never put these in Vite variables or commit 
 - `PAYCHANGU_SECRET_KEY`: PayChangu API secret key.
 - `PAYCHANGU_WEBHOOK_SECRET`: PayChangu Web Secret used to validate webhook signatures.
 - `APP_URL`: deployed website origin, e.g. `https://your-marketplace-domain`.
+- `PAYCHANGU_PAYOUTS_ENABLED`: set to `true` only after PayChangu confirms that API disbursements are activated for this merchant. Leave unset or `false` before activation.
 
 Supabase provides `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` to Edge Functions. Keep the service role key server-side only.
 
@@ -41,6 +44,8 @@ supabase functions deploy create-payment
 supabase functions deploy verify-payment
 supabase functions deploy payment-callback
 supabase functions deploy paychangu-webhook
+supabase functions deploy create-withdrawal
+supabase functions deploy verify-withdrawal
 ```
 
 The marketplace sets its own `callback_url` on every payment request to `https://qbqmhcoxmbpcjredofxs.supabase.co/functions/v1/payment-callback`. This is a per-transaction callback and does not require replacing the merchant account's existing global webhook URL. **Leave any webhook URL already used by another website unchanged.** The callback independently verifies each transaction against PayChangu before updating orders. The separate `paychangu-webhook` endpoint is retained for a future global-webhook setup; it has JWT verification disabled in `supabase/config.toml` and requires a valid HMAC signature.
@@ -54,7 +59,7 @@ The marketplace sets its own `callback_url` on every payment request to `https:/
 - Customers can request refunds for paid cancelled or delivered orders. Administrators review each seller order separately, so one order in a multi-seller checkout can be refunded without incorrectly refunding the other sellers' orders. The actual refund is processed in PayChangu first, then reconciled in the admin dashboard.
 - Stale payment sessions are expired after 30 minutes. A still-pending payment blocks a second attempt; late duplicate successful payments are flagged for a separate refund instead of crediting sellers twice.
 - Seller earnings are calculated per seller order after the configured platform fee. Earnings become withdrawable only when the order is marked delivered.
-- Sellers request withdrawals in Seller Dashboard → Transactions. Administrators review and record payout status at `/admin/payments`.
+- Sellers request withdrawals in Seller Dashboard → Transactions. Administrators use **Approve & Pay** at `/admin/payments`; the server claims each withdrawal once and submits it to PayChangu. Use **Check payout** to re-query an in-progress transfer. Customer collection functions remain separate.
 - Administrator payment dashboard includes transactions, withdrawal requests, refunds, reconciliation records and configurable marketplace fee/minimum withdrawal.
 
 ## Financial controls and boundaries
