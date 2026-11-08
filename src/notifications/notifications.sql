@@ -152,3 +152,10 @@ end $$;
 revoke insert,update,delete on public.marketplace_notifications from authenticated;
 grant select on public.marketplace_notifications to authenticated;
 grant update(read_at) on public.marketplace_notifications to authenticated;
+
+-- Ensure authenticated users can read their own notifications and update only their own read state.
+alter table public.marketplace_notifications enable row level security;
+drop policy if exists "Users read own marketplace notifications" on public.marketplace_notifications;
+create policy "Users read own marketplace notifications" on public.marketplace_notifications for select to authenticated using(user_id=auth.uid());
+drop policy if exists "Users update own marketplace notification read status" on public.marketplace_notifications;
+create policy "Users update own marketplace notification read status" on public.marketplace_notifications for update to authenticated using(user_id=auth.uid()) with check(user_id=auth.uid());
