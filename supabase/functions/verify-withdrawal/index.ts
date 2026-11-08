@@ -25,7 +25,7 @@ Deno.serve(async req=>{
   if(!attempt)return json({error:"No automated payout attempt exists for this withdrawal."},404);
   if(["succeeded","failed"].includes(attempt.status))return json({status:attempt.status,provider_reference:attempt.provider_reference||w.provider_reference,message:"This payout has already been finalized."});
   if(w.status!=="processing")return json({error:"Only processing withdrawals can be verified.",status:w.status},409);
-  const path=w.payout_method==="bank_transfer"?"/direct-charge/payouts/"+encodeURIComponent(attempt.charge_id)+"/details":"/mobile-money/payments/"+encodeURIComponent(attempt.charge_id)+"details";
+  const path=w.payout_method==="bank_transfer"?"/direct-charge/payouts/"+encodeURIComponent(attempt.charge_id)+"/details":"/mobile-money/payments/"+encodeURIComponent(attempt.charge_id)+"/details";
   const response=await fetch("https://api.paychangu.com"+path,{headers:{Accept:"application/json",Authorization:"Bearer "+secret},signal:AbortSignal.timeout(20000)});
   const result=await response.json().catch(()=>({})),data=getTransaction(result);
   const providerChargeId=String(data?.charge_id??data?.chargeId??"");
