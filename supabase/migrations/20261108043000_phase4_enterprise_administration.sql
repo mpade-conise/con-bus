@@ -209,3 +209,27 @@ create policy "Administrators read withdrawals" on public.seller_withdrawals for
 create policy "Delegated administrators manage marketplace ads" on public.marketplace_ads for all to authenticated using (public.has_admin_permission('ads.manage')) with check (public.has_admin_permission('ads.manage'));
 create policy "Delegated administrators manage customers" on public.profiles for update to authenticated using (public.has_admin_permission('customers.manage')) with check (public.has_admin_permission('customers.manage'));
 create policy "Delegated administrators read customers" on public.profiles for select to authenticated using (public.has_admin_permission('customers.view'));
+
+create or replace function public.admin_create_from_customer(p_user_id uuid,p_permissions text[])
+returns void language plpgsql security definer set search_path=public
+as $function$
+declare allowed text[]:=array[
+ 'dashboard.view','customers.view','customers.manage','sellers.view','sellers.manage',
+ 'catalog.view','catalog.manage','orders.view','orders.manage','reports.view',
+ 'ads.manage','homepage.manage','promotions.manage','analytics.view','engagement.view',
+ 'reviews.view','reviews.manage','messaging.moderate','finance.read','security.view','audit.view','alerts.manage'
+];
+begin
+ if not public.is_active_marketplace_admin() then raise exception 'Only a full administrator can create administrator accounts'; end if;
+ if p_user_id=auth.uid() then raise exception 'You cannot promote your own account'; end if;
+ if not exists(select 1 from public.profiles where id=p_user_id and role='customer' and is_active) then raise exception 'Select an active customer account; seller accounts cannot be converted'; end if;
+ if exists(select 1 from unnest(coalesce(p_permissions,array[]::text[])) x where not (x=any(allowed))) then raise exception 'One or more permissions are not recognized'; end if;
+ update public.profiles set role='administrator',admin_access_level='restricted',updated_at=now() where id=p_user_id;
+ insert into public.admin_permission_grants(user_id,permission,granted_by)
+ select p_user_id,x,auth.uid() from (select distinct unnest(coalesce(p_permissions,array[]::text[])) x) q;
+ insert into public.admin_audit_logs(actor_id,action,table_name,record_id,new_data)
+ values(auth.uid(),'administrator.created_from_customer','profiles',p_user_id::text,jsonb_build_object('permissions',coalesce(p_permissions,array[]::text[]),'access_level','restricted'));
+ insert into public.admin_alerts(alert_type,severity,title,details,source_table,source_record_id)
+ values('admin_access','warning','New delegated administrator added','A customer account was promoted to a restricted administrator.','profiles',p_user_id::text);
+end;
+$function$;
