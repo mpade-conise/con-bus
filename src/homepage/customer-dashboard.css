@@ -67,3 +67,11 @@
 .cd-main>.cd-panel{scroll-margin-top:20px}
 @media(max-width:900px){.cd-layout{grid-template-columns:220px minmax(0,1fr);gap:14px}.cd-side{grid-column:1;grid-row:1;position:sticky;top:12px;max-height:calc(100vh - 24px)}.cd-main{grid-column:2;grid-row:1}.cd-side .cd-panel{padding:13px}}
 @media(max-width:650px){.cd-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}.cd-side{position:static;grid-column:1;grid-row:1;max-height:none;overflow:visible;padding:0;display:block}.cd-main{grid-column:1;grid-row:2}.cd-sidebar-nav{padding:12px}.cd-sidebar-nav nav{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.cd-sidebar-nav nav>a{min-height:38px;padding:8px;font-size:9px;gap:7px}.cd-sidebar-nav nav>a svg{width:14px;height:14px}.cd-side>.cd-panel:not(.cd-sidebar-nav){display:none}.cd-side .cd-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Sidebar hierarchy and compact navigation */
+.cd-side{display:flex;flex-direction:column}
+.cd-sidebar-nav{order:-2}
+.cd-profile{order:-1}
+.cd-side>.cd-panel:has(.cd-shortcuts){display:none}
+.cd-sidebar-nav nav>a{width:100%}
+@media(max-width:650px){.cd-side{display:block}.cd-side>.cd-panel:not(.cd-sidebar-nav){display:none}.cd-sidebar-nav{order:0}}
