@@ -1,11 +1,12 @@
 import{createClient}from"https://esm.sh/@supabase/supabase-js@2";
+const PAYOUTS_ENABLED=false;
 const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
 const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{...cors,"Content-Type":"application/json"}});
 const operators={airtel_money:"20be6c20-adeb-4b5b-a7ba-0769820df4fb",tnm_mpamba:"27494cb5-ba9e-437f-a114-4e7a7686bcca"};
 const validCurrency=v=>["MWK","MK"].includes(String(v||"").toUpperCase());
 const normalizeStatus=v=>{const s=String(v||"").toLowerCase();if(["success","successful","succeeded","paid","completed"].includes(s))return"succeeded";if(["failed","failure","rejected","cancelled"].includes(s))return"failed";if(["pending","processing","initiated","queued"].includes(s))return"pending";return"unknown"};
 async function verifyProvider(secret,method,chargeId,amount){
- const path=method==="bank_transfer"?"/direct-charge/payouts/"+encodeURIComponent(chargeId)+"/details":"/mobile-money/payments/"+encodeURIComponent(chargeId)+"details";
+ const path=method==="bank_transfer"?"/direct-charge/payouts/"+encodeURIComponent(chargeId)+"/details":"/mobile-money/payments/"+encodeURIComponent(chargeId)+"/details";
  const response=await fetch("https://api.paychangu.com"+path,{headers:{Accept:"application/json",Authorization:"Bearer "+secret}});
  const result=await response.json().catch(()=>({})),data=result?.data?.transaction||result?.data;
  if(!response.ok||!data||String(data.charge_id||"")!==chargeId||Number(data.amount)!==Number(amount)||!validCurrency(data.currency))return{status:"unknown",providerStatus:data?.status||result?.status||"verification_mismatch",providerReference:data?.ref_id||null};
@@ -17,7 +18,7 @@ Deno.serve(async req=>{
  try{
   const url=Deno.env.get("SUPABASE_URL"),anon=Deno.env.get("SUPABASE_ANON_KEY"),service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),secret=Deno.env.get("PAYCHANGU_SECRET_KEY");
   if(!url||!anon||!service||!secret)throw new Error("Withdrawal service is not configured.");
-  if(Deno.env.get("PAYCHANGU_PAYOUTS_ENABLED")!=="true")return json({error:"PayChangu payouts are not enabled for this merchant account. No payout was submitted."},503);
+  if(!PAYOUTS_ENABLED||Deno.env.get("PAYCHANGU_PAYOUTS_ENABLED")!=="true")return json({error:"PayChangu payouts are not enabled for this merchant account. No payout was submitted."},503);
   const authorization=req.headers.get("Authorization");if(!authorization?.startsWith("Bearer "))return json({error:"Authentication required."},401);
   const userClient=createClient(url,anon,{global:{headers:{Authorization:authorization}}});
   const{data:{user},error:userError}=await userClient.auth.getUser();if(userError||!user)return json({error:"Your session is invalid. Sign in again."},401);
