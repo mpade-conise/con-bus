@@ -1,4 +1,4 @@
-import{useCallback,useEffect,useMemo,useState}from"react";import{Link}from"react-router-dom";import{Activity,AlertTriangle,ArrowDownToLine,ArrowUpRight,BarChart3,CheckCircle2,Clock3,CreditCard,RefreshCw,RotateCcw,Search,ShieldCheck,Wallet}from"lucide-react";import{requireSupabase}from"../authentication/supabase.js";import{money}from"../homepage/StorefrontContext.jsx";import"./financial-control.css";
+import{useCallback,useEffect,useMemo,useState}from"react";import{Link}from"react-router-dom";import{AlertTriangle,ArrowDownToLine,ArrowUpRight,BarChart3,Clock3,CreditCard,RefreshCw,RotateCcw,Search,ShieldCheck,Wallet}from"lucide-react";import{requireSupabase}from"../authentication/supabase.js";import{money}from"../homepage/StorefrontContext.jsx";import"./financial-control.css";
 const date=v=>v?new Date(v).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"}):"—";
 const sum=(rows,key)=>rows.reduce((n,r)=>n+Number(r[key]||0),0);
 const tabs=[["paychangu","PayChangu monitoring",CreditCard],["payouts","Payout reconciliation",Wallet],["earnings","Seller earnings",ArrowDownToLine],["revenue","Revenue analytics",BarChart3],["refunds","Refunds & disputes",RotateCcw]];
@@ -13,8 +13,7 @@ const paidTransactions=transactions.filter(t=>["successful","success","paid","co
 const paidWithdrawals=withdrawals.filter(w=>w.status==="paid");
 const platformFees=sum(earnings,"platform_fee"),sellerNet=sum(earnings,"net_amount"),grossSales=sum(earnings,"gross_amount");
 const monthly=useMemo(()=>{const map=new Map();for(const e of earnings){const key=e.created_at?.slice(0,7)||"Unknown";map.set(key,(map.get(key)||0)+Number(e.platform_fee||0))}return[...map.entries()].sort((a,b)=>a[0].localeCompare(b[0])).slice(-6)},[earnings]);
-const matches=(values)=>values.filter(v=>String(v??"").toLowerCase().includes(search.toLowerCase()));
-const txRows=matches(transactions.flatMap(t=>[t.tx_ref,t.provider,t.payment_method,t.status,t.provider_reference,t.provider_status,t.customer_id,t.failure_reason]));
+const txRows=transactions.filter(t=>[t.tx_ref,t.provider,t.payment_method,t.status,t.provider_reference,t.provider_status,t.customer_id,t.failure_reason].some(v=>String(v??"").toLowerCase().includes(search.toLowerCase())));
 const payoutRows=withdrawals.filter(w=>[w.reference,w.seller_id,w.status,w.payout_method,w.provider_reference,w.destination?.account_name,w.destination?.account_number].some(v=>String(v??"").toLowerCase().includes(search.toLowerCase())));
 const earningRows=sellerRows.filter(r=>[r.seller_id,profileById[r.seller_id]?.full_name,profileById[r.seller_id]?.business_name].some(v=>String(v??"").toLowerCase().includes(search.toLowerCase())));
 const refundRows=refunds.filter(r=>[r.id,r.order_id,r.customer_id,r.seller_id,r.reason,r.status].some(v=>String(v??"").toLowerCase().includes(search.toLowerCase())));
