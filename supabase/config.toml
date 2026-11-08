@@ -3,3 +3,6 @@ verify_jwt = false
 
 [functions.payment-callback]
 verify_jwt = false
+
+[functions.secure-login]
+verify_jwt = false
