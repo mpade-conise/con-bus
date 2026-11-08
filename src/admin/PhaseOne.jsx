@@ -1,4 +1,4 @@
-import{useCallback,useEffect,useMemo,useState}from"react";import{Link}from"react-router-dom";import{requireSupabase}from"../authentication/supabase.js";import{Activity,Users,Store,Package,ShoppingBag,RefreshCw,Search,ArrowLeft}from"lucide-react";import"./phase-one.css";
+import{useCallback,useEffect,useMemo,useState}from"react";import{requireSupabase}from"../authentication/supabase.js";import{Activity,Users,Store,Package,ShoppingBag,RefreshCw,Search}from"lucide-react";import"./phase-one.css";
 const sections=[["analytics","Analytics",Activity],["sellers","Sellers",Store],["orders","Orders",ShoppingBag],["customers","Customers",Users],["products","Products",Package]];
 const date=v=>v?new Date(v).toLocaleString("en-GB"):"—";
 const money=v=>"MK "+Number(v||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
