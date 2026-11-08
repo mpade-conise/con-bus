@@ -30,12 +30,15 @@ Deno.serve(async req=>{
   const result=await response.json().catch(()=>({})),data=getTransaction(result);
   const providerChargeId=String(data?.charge_id??data?.chargeId??"");
   const providerAmount=Number(data?.amount);
-  const providerCurrency=String(data?.currency||"").toUpperCase();
+  const providerFee=Number(data?.transaction_charges?.amount??0);
+  const providerNetAmount=providerAmount-providerFee;
+  const amountMatches=Number.isFinite(providerAmount)&&(providerAmount===Number(w.amount)||providerNetAmount===Number(w.amount));
+  const providerCurrency=String(data?.currency||data?.transaction_charges?.currency||"").toUpperCase();
   const mismatches=[];
   if(!response.ok)mismatches.push("http_"+response.status);
   if(!data)mismatches.push("missing_transaction_data");
   if(data&&providerChargeId!==attempt.charge_id)mismatches.push("charge_id_mismatch");
-  if(data&&(!Number.isFinite(providerAmount)||providerAmount!==Number(w.amount)))mismatches.push("amount_mismatch");
+  if(data&&!amountMatches)mismatches.push("amount_mismatch");
   if(data&&!validCurrency(providerCurrency))mismatches.push("currency_mismatch");
   if(mismatches.length){
    const providerStatus="verification_mismatch:"+mismatches.join(",");
