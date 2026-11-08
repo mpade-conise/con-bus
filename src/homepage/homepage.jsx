@@ -1,6 +1,7 @@
 import{Route}from"react-router-dom";
 import Homepage from"./Homepage.jsx";
 import CustomerDashboard from"./CustomerDashboard.jsx";
+import CustomerSupport from"./CustomerSupport.jsx";
 import ProductDetails from"./ProductDetails.jsx";
 import CheckoutStart from"./CheckoutStart.jsx";
 import CustomerOrders from"./CustomerOrders.jsx";
@@ -15,6 +16,7 @@ export const homepageRoutes=[
 
  <Route key="product" path="/product/:id" element={<ProtectedRoute roles={["customer"]}><ProductDetails/></ProtectedRoute>}/>,
  <Route key="checkout" path="/checkout" element={<ProtectedRoute roles={["customer"]}><CheckoutStart/></ProtectedRoute>}/>,
+ <Route key="customer-support" path="/support" element={<ProtectedRoute roles={["customer"]}><CustomerSupport/></ProtectedRoute>}/>,
  <Route key="orders" path="/orders" element={<ProtectedRoute roles={["customer"]}><CustomerOrders/></ProtectedRoute>}/>,
  <Route key="transactions" path="/transactions" element={<ProtectedRoute roles={["customer"]}><CustomerTransactions/></ProtectedRoute>}/>,
  <Route key="payment-result" path="/payment-result" element={<ProtectedRoute roles={["customer"]}><PaymentResult/></ProtectedRoute>}/>,
