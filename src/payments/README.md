@@ -38,7 +38,7 @@ Supabase provides `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE
 Example CLI deployment:
 ```sh
 supabase login
-supabase link --project-ref qbqmhcoxmbpcjredofxs
+supabase link --project-ref pyzxfzexihwnyiknxaee
 supabase secrets set PAYCHANGU_SECRET_KEY=... PAYCHANGU_WEBHOOK_SECRET=... APP_URL=https://your-marketplace-domain
 supabase functions deploy create-payment
 supabase functions deploy verify-payment
@@ -48,7 +48,7 @@ supabase functions deploy create-withdrawal
 supabase functions deploy verify-withdrawal
 ```
 
-The marketplace sets its own `callback_url` on every payment request to `https://qbqmhcoxmbpcjredofxs.supabase.co/functions/v1/payment-callback`. This is a per-transaction callback and does not require replacing the merchant account's existing global webhook URL. **Leave any webhook URL already used by another website unchanged.** The callback independently verifies each transaction against PayChangu before updating orders. The separate `paychangu-webhook` endpoint is retained for a future global-webhook setup; it has JWT verification disabled in `supabase/config.toml` and requires a valid HMAC signature.
+The marketplace sets its own `callback_url` on every payment request to `https://pyzxfzexihwnyiknxaee.supabase.co/functions/v1/payment-callback`. This is a per-transaction callback and does not require replacing the merchant account's existing global webhook URL. **Leave any webhook URL already used by another website unchanged.** The callback independently verifies each transaction against PayChangu before updating orders. The separate `paychangu-webhook` endpoint is retained for a future global-webhook setup; it has JWT verification disabled in `supabase/config.toml` and requires a valid HMAC signature.
 
 ## Connected flows
 - Customer selects Airtel Money, TNM Mpamba, Visa/Mastercard or cash on delivery at `/checkout`.
