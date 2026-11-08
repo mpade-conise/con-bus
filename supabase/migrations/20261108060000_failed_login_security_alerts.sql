@@ -47,3 +47,6 @@ end;
 $function$;
 drop trigger if exists failed_login_admin_alert on public.failed_login_attempts;
 create trigger failed_login_admin_alert after insert on public.failed_login_attempts for each row execute function public.create_failed_login_alert();
+revoke all on table public.failed_login_attempts from anon, authenticated;
+grant select on table public.failed_login_attempts to authenticated;
+revoke all on function public.create_failed_login_alert() from public, anon, authenticated;
