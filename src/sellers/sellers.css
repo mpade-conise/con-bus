@@ -124,3 +124,12 @@
 .seller-order-timeline small{color:#909c95;font-size:9px}
 @media(max-width:850px){.seller-order-filters{grid-template-columns:1fr 1fr}.seller-order-filters>input{grid-column:1/-1}.seller-order-filters>button{align-self:end}.seller-order-detail-grid{grid-template-columns:1fr}}
 @media(max-width:600px){.seller-order-filters{grid-template-columns:1fr}.seller-order-filters>input{grid-column:auto}.seller-order-bulk{align-items:stretch}.seller-order-bulk>label{width:100%}.seller-order-bulk select,.seller-order-bulk .seller-primary{width:100%}.seller-order-modal-backdrop{padding:8px}.seller-order-modal{padding:15px;border-radius:11px}.seller-order-totals{justify-content:flex-start;gap:9px}.seller-orders-table{min-width:850px}}
+
+
+.seller-order-history{display:grid;gap:7px}
+.seller-order-history button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:10px 12px;border:1px solid #edf1ef;border-radius:8px;background:#fff;text-align:left}
+.seller-order-history button.current{border-color:#9ccdb2;background:#f5fbf7}
+.seller-order-history button>span{display:grid;gap:4px}
+.seller-order-history b{font-size:10px;color:#344b40}
+.seller-order-history small{font-size:9px;color:#8a968f;text-transform:capitalize}
+.seller-order-history strong{font-size:11px;color:#2e4b3d;white-space:nowrap}
