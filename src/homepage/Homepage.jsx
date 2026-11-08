@@ -5,6 +5,7 @@ import{useStorefront,productCategory,productPrice,productName}from"./StorefrontC
 import{supabase,isSupabaseConfigured}from"../authentication/supabase.js";
 import StoreHeader from"./StoreHeader.jsx";
 import HeroBanner from"./HeroBanner.jsx";
+import MarketplaceAds from"./MarketplaceAds.jsx";
 import PromotionalBanners from"./PromotionalBanners.jsx";
 import ProductSearch from"./ProductSearch.jsx";
 import ProductFilters from"./ProductFilters.jsx";
@@ -59,6 +60,7 @@ export default function Homepage(){
  return <main className="mh-shell">
   <StoreHeader onCart={()=>CO(true)} search={search} setSearch={S} onSearch={searchSubmit} products={products} onSelectCategory={selectCategory} selectedCategory={category}/>
   <HeroBanner search={search} setSearch={S} onSearch={searchSubmit}/>
+  <MarketplaceAds/>
   <PromotionalBanners/>
   <div className="mh-store-layout"><div className="mh-store-main">
   {shelves.map(([eyebrow,title,items])=>items.length>0&&<section id={title==="Featured products"?"featured":title==="Latest products"?"latest":undefined} className="mh-section mh-product-shelf" key={title}><div className="mh-section-heading"><div><span className="mh-eyebrow">{eyebrow}</span><h2>{title}</h2></div><a href="#products">Shop all <ArrowRight size={15}/></a></div><ProductGrid products={items} {...gridProps}/></section>)}
