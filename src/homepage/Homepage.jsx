@@ -42,6 +42,7 @@ export default function Homepage(){
   return list;
  },[products,search,searchType,category,min,max,availability,sort,locationFilter,rating,sellerFilter,storeById]);
  const storeResults=useMemo(()=>{const term=search.trim().toLowerCase();if(!term||!["all","seller","business"].includes(searchType))return[];return stores.filter(s=>[s.store_name,s.description,s.city,s.region,s.country].some(v=>String(v||"").toLowerCase().includes(term)))},[stores,search,searchType]);
+ const categories=useMemo(()=>[...new Set(products.map(productCategory).filter(Boolean))].sort((a,b)=>a.localeCompare(b)),[products]);
  const categoryProducts=useMemo(()=>category&&category!=="All category"?products.filter(p=>productCategory(p).toLowerCase()===category.toLowerCase()):products,[products,category]);
  const featured=uniqueProducts(categoryProducts.filter(p=>p.is_featured||p.featured));
  const featuredIds=new Set(featured.map(p=>String(p.id)));
@@ -62,7 +63,7 @@ export default function Homepage(){
   <HeroBanner search={search} setSearch={S} onSearch={searchSubmit}/>
   <MarketplaceAds/>
   <PromotionalBanners/>
-  <div className="mh-store-layout"><div className="mh-store-main">
+  <div className="mh-store-layout"><aside className="mh-market-sidebar"><section className="mh-market-side-card"><span className="mh-eyebrow">DISCOVER</span><h2>Shop marketplace</h2><nav><a href="#products" onClick={()=>{C("All category");S("");SellerFilter("")}}> <span>⌂</span> All products</a><a href="#featured"><span>✦</span> Featured products</a><a href="#latest"><span>◷</span> New arrivals</a><a href="#products" onClick={()=>{Sort("popular");C("All category")}}><span>↗</span> Popular products</a></nav></section><section className="mh-market-side-card"><span className="mh-eyebrow">SHOP BY CATEGORY</span><nav className="mh-market-categories"><button className={category==="All category"?"active":""} onClick={()=>selectCategory("All category")}>All categories <small>{products.length}</small></button>{categories.map(name=><button key={name} className={category===name?"active":""} onClick={()=>selectCategory(name)}>{name}<small>{products.filter(p=>productCategory(p)===name).length}</small></button>)}</nav></section><section className="mh-market-side-card mh-market-side-links"><span className="mh-eyebrow">YOUR ACCOUNT</span><a href="/customer/dashboard">My account</a><a href="/orders">My orders</a><a href="/messages">Messages</a><a href="/support">Help & support</a></section></aside><div className="mh-store-main">
   {shelves.map(([eyebrow,title,items])=>items.length>0&&<section id={title==="Featured products"?"featured":title==="Latest products"?"latest":undefined} className="mh-section mh-product-shelf" key={title}><div className="mh-section-heading"><div><span className="mh-eyebrow">{eyebrow}</span><h2>{title}</h2></div><a href="#products">Shop all <ArrowRight size={15}/></a></div><ProductGrid products={items} {...gridProps}/></section>)}
   <section className="mh-section" id="products">
    <div className="mh-section-heading"><div><span className="mh-eyebrow">THE MARKETPLACE</span><h2>{sellerFilter?"Products from selected business":category==="All category"?"Explore all products":category||"Explore all products"}</h2></div><span className="mh-results-count">{filtered.length} products{storeResults.length?" · "+storeResults.length+" businesses":""}</span></div>
