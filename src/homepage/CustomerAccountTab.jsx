@@ -16,7 +16,7 @@ import AccountDeactivation from"../authentication/AccountDeactivation.jsx";
 import SecurityCenter from"../authentication/SecurityCenter.jsx";
 import PhoneVerification from"../authentication/PhoneVerification.jsx";
 import Logout from"../authentication/Logout.jsx";
-import"./customer-account-tab.css";
+
 const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}};
 const date=v=>v?new Date(v).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"";
 function Panel({eyebrow,title,children,action}){return <section className="cat-panel"><header><div><small>{eyebrow}</small><h2>{title}</h2></div>{action}</header>{children}</section>}
