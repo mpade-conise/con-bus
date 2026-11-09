@@ -287,3 +287,14 @@
 @media(max-width:900px){.mh-customer-app{grid-template-columns:220px minmax(0,1fr)}.mh-customer-topbar{padding:0 22px}.mh-customer-shell{padding:0 22px}}
 @media(max-width:760px){.mh-customer-app{display:block}.mh-customer-sidebar{position:fixed;left:0;top:0;bottom:0;width:248px;height:100dvh;transform:translateX(-105%);transition:transform .22s ease;box-shadow:12px 0 35px #101b2a20}.mh-customer-sidebar.open{transform:translateX(0)}.mh-customer-topbar{height:70px;padding:0 4%;justify-content:flex-start;gap:13px;margin:0 0 5px}.mh-customer-menu{display:grid;flex:none}.mh-customer-topbar>div{flex:1}.mh-customer-topbar h1{font-size:20px}.mh-customer-topbar>a{height:34px;padding:0 8px;font-size:9px}.mh-customer-shell{padding:0 4%}.mh-customer-shell .mh-hero{padding:28px 0}.mh-customer-shell .mh-header{position:relative;top:auto}}
 @media(max-width:420px){.mh-customer-topbar>a{font-size:0;gap:0;width:35px;justify-content:center}.mh-customer-topbar>a svg{width:17px;height:17px}.mh-customer-shell .mh-hero h1{font-size:35px}}
+
+.mh-customer-account-nav{display:grid;gap:4px;margin-top:15px;padding-top:14px;border-top:1px solid #ffffff20}
+.mh-customer-account-nav>.mh-customer-nav-toggle{height:43px;width:100%;padding:0 12px;display:flex;align-items:center;gap:11px;border:0;border-radius:7px;background:#244558;color:#fff;text-align:left;font-size:11px;font-weight:700;cursor:pointer}
+.mh-customer-account-nav>.mh-customer-nav-toggle span{flex:1}
+.mh-customer-account-list{display:grid;gap:2px;padding:5px 0 8px 8px;max-height:48vh;overflow-y:auto;scrollbar-width:thin}
+.mh-customer-account-list a{min-height:34px;padding:6px 8px;display:flex;align-items:center;gap:9px;border-radius:6px;color:#b8c7d0;text-decoration:none;font-size:10px;font-weight:600}
+.mh-customer-account-list a svg{flex:none;color:#83a4b2}
+.mh-customer-account-list a:hover{background:#244558;color:#fff}
+.mh-customer-account-list a:hover svg{color:#73d5aa}
+.mh-customer-sidebar{scrollbar-width:thin}
+@media(max-width:760px){.mh-customer-account-list{max-height:44vh}}
