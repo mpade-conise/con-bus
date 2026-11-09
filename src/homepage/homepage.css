@@ -253,3 +253,22 @@
 @media(max-width:1100px){.mh-product-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:13px!important}.mh-nav{gap:12px}.mh-nav a{font-size:11px}.mh-header-search{max-width:230px}}
 @media(max-width:760px){.mh-shell{padding:0 16px}.mh-header{height:66px;gap:9px}.mh-nav{top:66px}.mh-welcome{min-height:0;margin:17px 0;padding:27px 22px;border-radius:16px}.mh-welcome:after{right:-95px;width:190px;height:190px}.mh-welcome h1{font-size:clamp(30px,7vw,42px);letter-spacing:-1.4px}.mh-welcome p{font-size:12px;max-width:420px}.mh-promo-list{grid-template-columns:1fr}.mh-promo-list .mh-promo{min-height:120px}.mh-section{padding:25px 0}.mh-product-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:11px!important}.mh-product-info{padding:10px!important}.mh-product-name{font-size:11px!important;min-height:31px}.mh-product-card .mh-card-meta span{font-size:7px}.mh-product-bottom strong{font-size:11px}.mh-seller-callout{margin:25px 0}}
 @media(max-width:420px){.mh-shell{padding:0 12px}.mh-brand{font-size:17px}.mh-brand-logo{width:29px;height:29px}.mh-header-search{display:none}.mh-header-actions{margin-left:auto}.mh-cart-button{height:36px}.mh-account{height:36px;font-size:10px}.mh-welcome{padding:24px 17px}.mh-welcome h1{font-size:31px}.mh-welcome>a{padding:11px 13px;font-size:10px}.mh-product-grid{gap:8px!important}.mh-product-info{padding:8px!important}.mh-product-name{font-size:10px!important;min-height:29px}.mh-product-card .mh-card-seller strong{font-size:8px}.mh-product-card .mh-card-meta span{font-size:7px}.mh-product-bottom button{width:28px;height:28px}.mh-product-bottom strong{font-size:10px}.mh-product-card .mh-quick{width:28px;height:28px}}
+
+
+/* Customer marketplace left navigation */
+.mh-store-layout{display:grid!important;grid-template-columns:238px minmax(0,1fr)!important;gap:24px!important;align-items:start!important}
+.mh-market-sidebar{position:sticky;top:16px;display:grid;gap:13px;min-width:0;max-height:calc(100vh - 32px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.mh-market-side-card{padding:17px 14px;border:1px solid #e7eee9;border-radius:13px;background:#fff;box-shadow:0 3px 14px #173d3107;min-width:0}
+.mh-market-side-card>.mh-eyebrow{display:block;padding:0 7px 10px;font-size:8px}
+.mh-market-side-card h2{margin:0 7px 12px;font:800 16px Manrope,sans-serif;letter-spacing:-.4px;color:#203b30}
+.mh-market-side-card nav{display:grid;gap:3px}
+.mh-market-side-card nav>a,.mh-market-side-links>a{display:flex;align-items:center;gap:10px;min-height:39px;padding:9px 10px;border-radius:8px;color:#526457;font-size:11px;font-weight:600;text-decoration:none;transition:background .15s,color .15s}
+.mh-market-side-card nav>a:hover,.mh-market-side-links>a:hover{background:#eff8f2;color:#11845d}
+.mh-market-side-card nav>a>span{width:19px;height:19px;display:grid;place-items:center;border-radius:6px;background:#edf8f2;color:#11845d;font-size:13px}
+.mh-market-categories button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:36px;padding:8px 10px;border:0;border-radius:7px;background:transparent;color:#596b60;text-align:left;font-size:10px;font-weight:600;cursor:pointer}
+.mh-market-categories button:hover,.mh-market-categories button.active{background:#edf8f2;color:#11845d}
+.mh-market-categories button small{color:#91a097;font-size:9px}
+.mh-market-main{min-width:0}
+@media(max-width:1050px){.mh-store-layout{grid-template-columns:210px minmax(0,1fr)!important;gap:16px!important}.mh-market-side-card{padding:14px 10px}}
+@media(max-width:760px){.mh-store-layout{grid-template-columns:minmax(0,1fr)!important;gap:13px!important}.mh-market-sidebar{position:static;max-height:none;overflow:visible;grid-template-columns:1fr;gap:9px}.mh-market-side-card{padding:12px}.mh-market-side-card:first-child nav{grid-template-columns:repeat(2,minmax(0,1fr))}.mh-market-side-card:first-child nav>a{min-height:34px;padding:7px;font-size:10px}.mh-market-side-card:nth-child(2) .mh-market-categories{display:flex;gap:6px;overflow-x:auto;padding-bottom:3px;scrollbar-width:thin}.mh-market-categories button{width:auto;flex:0 0 auto;min-height:32px;white-space:nowrap;padding:7px 10px;background:#f7faf8}.mh-market-side-links{display:none}}
+@media(max-width:420px){.mh-market-side-card:first-child nav{grid-template-columns:repeat(2,minmax(0,1fr))}.mh-market-side-card:first-child nav>a{font-size:9px;gap:6px}.mh-market-side-card>.mh-eyebrow{padding-bottom:7px}}
